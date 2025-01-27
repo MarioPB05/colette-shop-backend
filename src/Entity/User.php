@@ -7,10 +7,12 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Table(name: '`user`')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -39,11 +41,11 @@ class User
     #[ORM\JoinColumn(nullable: false)]
     private ?Client $client = null;
 
-    #[ORM\Column(enumType: UserRole::class)]
-    private int $role = 1;
+    #[ORM\Column(type: 'integer', enumType: UserRole::class)]
+    private UserRole $role;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'brawler_avatar', nullable: false)]
+    #[ORM\JoinColumn(name: 'brawler_avatar', nullable: true)]
     private ?Brawler $brawler_avatar = null;
 
     /**
@@ -178,12 +180,12 @@ class User
 
     public function getRole(): UserRole
     {
-        return UserRole::from($this->role);
+        return $this->role;
     }
 
     public function setRole(UserRole $role): static
     {
-        $this->role = $role->value;
+        $this->role = $role;
 
         return $this;
     }
@@ -312,5 +314,17 @@ class User
         }
 
         return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return [$this->getRole()->value];
+    }
+
+    public function eraseCredentials(): void {}
+
+    public function getUserIdentifier(): string
+    {
+        return $this->username;
     }
 }
