@@ -22,6 +22,8 @@
         "symfony/property-info": "7.2.*",
         "symfony/runtime": "7.2.*",
         "symfony/serializer": "7.2.*",
+        "symfony/translation": "7.2.*",
+        "symfony/validator": "7.2.*",
         "symfony/yaml": "7.2.*"
     },
     "config": {
