@@ -40,7 +40,15 @@ final class UserController extends AbstractController{
         $user->setUsername($createUserRequest->username);
         $user->setEmail($createUserRequest->email);
         $user->setPassword($passwordHasher->hashPassword($user, $createUserRequest->password));
-        $user->setBrawlTag('1234'); // TODO: Generate random brawl tag
+
+        $tag = substr(bin2hex(random_bytes(8)), 0, 8);
+
+        // Check if tag is already in use
+        while ($entityManager->getRepository(User::class)->findOneBy(['brawl_tag' => $tag])) {
+            $tag = substr(bin2hex(random_bytes(8)), 0, 8);
+        }
+
+        $user->setBrawlTag(strtoupper($tag));
         $user->setClient($client);
         $user->setRole(UserRole::USER);
 
