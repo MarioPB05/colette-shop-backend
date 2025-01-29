@@ -58,4 +58,24 @@ final class UserController extends AbstractController{
         return new JsonResponse(['status' => 'User created!'], Response::HTTP_CREATED);
     }
 
+    #[Route('/', name: 'user_list', methods: ['GET'])]
+    public function list(EntityManagerInterface $entityManager): JsonResponse
+    {
+        $users = $entityManager->getRepository(User::class)->findAll();
+
+        $data = [];
+
+        foreach ($users as $user) {
+            $data[] = [
+                'id' => $user->getId(),
+                'name' => $user->getClient()->getName(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'gems' => $user->getGems(),
+            ];
+        }
+
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
 }
