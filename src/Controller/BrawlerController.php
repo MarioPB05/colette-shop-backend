@@ -17,23 +17,9 @@ final class BrawlerController extends AbstractController
     #[Route('/', name: 'get_all_brawlers', methods: ['GET'])]
     public function getAllBrawlers(BrawlerRepository $brawlerRepository): JsonResponse
     {
-        $brawlers = $brawlerRepository->findAll();
+        $brawlers = $brawlerRepository->getAllBrawlers();
 
-        $response = [];
-
-        foreach ($brawlers as $brawler) {
-            $response[] = new TableBrawlerResponse(
-                $brawler->getId(),
-                $brawler->getName(),
-                $brawlerRepository->findCountBrawlersByPerson($brawler->getId()),
-                $brawlerRepository->findCountPersonByFavouriteBrawler($brawler->getId()),
-                $brawler->getPinImage(),
-                $brawler->getRarity()->getName()
-            );
-        }
-
-        return $this->json($response);
-
+        return $this->json($brawlers);
     }
 
 }
