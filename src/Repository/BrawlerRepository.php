@@ -17,6 +17,28 @@ class BrawlerRepository extends ServiceEntityRepository
         parent::__construct($registry, Brawler::class);
     }
 
+    public function getAllBrawlers(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.pin_image, r.name AS rarity_name,
+                    (
+                        SELECT COUNT(u.user_id)
+                        FROM user_brawler u
+                        WHERE u.brawler_id = b.id
+                    ) AS count_brawlers,
+                    (
+                        SELECT COUNT(u.user_id)
+                        FROM user_favorite_brawlers u
+                        WHERE u.brawler_id = b.id
+                    ) AS count_person_favourite_brawler
+                FROM brawler AS b
+                JOIN rarity AS r ON b.rarity_id = r.id';
+
+        $result = $conn->executeQuery($sql);
+
+        return $result->fetchAllAssociative();
+    }
+
     /**
      * It counts the number of people who have the favorite brawler
      * @return Brawler[]
