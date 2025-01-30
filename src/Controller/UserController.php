@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\user\CreateUserRequest;
+use App\DTO\user\TableUserResponse;
 use App\Entity\Client;
 use App\Entity\User;
 use App\Enum\UserRole;
@@ -66,13 +67,14 @@ final class UserController extends AbstractController{
         $data = [];
 
         foreach ($users as $user) {
-            $data[] = [
-                'id' => $user->getId(),
-                'name' => $user->getClient()->getName(),
-                'username' => $user->getUsername(),
-                'email' => $user->getEmail(),
-                'gems' => $user->getGems(),
-            ];
+            $data[] = new TableUserResponse(
+                $user->getId(),
+                $user->getClient()->getName(),
+                $user->getUsername(),
+                $user->getEmail(),
+                $user->getGems(),
+                $user->isEnabled()
+            );
         }
 
         return new JsonResponse($data, Response::HTTP_OK);
