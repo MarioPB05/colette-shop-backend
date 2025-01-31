@@ -1,0 +1,4 @@
+OrderState.PENDING: "Pendiente"
+OrderState.PAID: "Pagado"
+OrderState.RETURNED: "Devuelto"
+OrderState.CANCELLED: "Cancelado"
