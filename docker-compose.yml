@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    container_name: symfony_app
+    volumes:
+      - .:/var/www/symfony
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    networks:
+      - symfony
+
+networks:
+  symfony:
+
+# Como ejecutar el contenedor
+# docker-compose up --build -d
+
+# Para entrar al contenedor
+# docker exec -it symfony_app bash
+
+# Para iniciar el servidor php dentro del contenedor
+# php -S 0.0.0.0:8000 -t public
