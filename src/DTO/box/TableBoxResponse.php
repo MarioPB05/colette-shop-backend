@@ -3,8 +3,9 @@
 namespace App\DTO\box;
 
 use App\Enum\BoxType;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-class AdminGetBoxesResponse
+class TableBoxResponse
 {
 
     public int $id;
@@ -19,13 +20,13 @@ class AdminGetBoxesResponse
 
     public bool $pinned;
 
-    public function __construct(int $id, string $name, float $price, int $quantity, BoxType $type, bool $pinned)
+    public function __construct(int $id, string $name, float $price, int $quantity, BoxType $type, bool $pinned, TranslatorInterface $translator)
     {
         $this->id = $id;
         $this->name = $name;
         $this->price = $price;
         $this->quantity = $quantity;
-        $this->type =$type->name;
+        $this->type = $translator->trans('BoxType.' . $type->name, domain: 'enums');
         $this->pinned = $pinned;
     }
 
