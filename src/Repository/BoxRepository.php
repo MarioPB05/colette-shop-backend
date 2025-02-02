@@ -2,7 +2,6 @@
 
 namespace App\Repository;
 
-use App\DTO\box\AdminGetBoxesResponse;
 use App\Entity\Box;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -24,20 +23,11 @@ class BoxRepository extends ServiceEntityRepository
      */
     public function getAllBoxes(): array
     {
-        $results = $this->createQueryBuilder('b')
+        return $this->createQueryBuilder('b')
             ->select('b.id', 'b.name', 'b.price', 'b.quantity', 'b.type', 'b.pinned')
             ->where('b.deleted = FALSE')
             ->getQuery()
             ->getResult();
-
-        return array_map(fn($result) => new AdminGetBoxesResponse(
-            $result['id'],
-            $result['name'],
-            $result['price'],
-            $result['quantity'],
-            $result['type'],
-            $result['pinned']
-        ), $results);
     }
 
 }
