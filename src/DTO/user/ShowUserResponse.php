@@ -2,10 +2,11 @@
 
 namespace App\DTO\user;
 
-class TableUserResponse
+class ShowUserResponse
 {
     public int $id;
     public string $name;
+    public string $surname;
     public string $username;
     public string $email;
     public int $gems;
