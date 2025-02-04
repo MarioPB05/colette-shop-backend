@@ -32,8 +32,8 @@ class Box
     #[ORM\Column(options: ['default' => false])]
     private bool $deleted = false;
 
-    #[ORM\Column(enumType: BoxType::class)]
-    private ?int $type = null;
+    #[ORM\Column(type: 'integer', enumType: BoxType::class)]
+    private BoxType $type;
 
     #[ORM\Column(options: ['default' => false])]
     private bool $pinned = false;
@@ -114,14 +114,14 @@ class Box
         return $this;
     }
 
-    public function getType(): ?BoxType
+    public function getType(): BoxType
     {
-        return $this->type ? BoxType::from($this->type) : null;
+        return $this->type;
     }
 
     public function setType(BoxType $type): static
     {
-        $this->type = $type->value;
+        $this->type = $type;
 
         return $this;
     }
