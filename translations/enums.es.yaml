@@ -1,0 +1,9 @@
+BoxType.BOX: "Caja"
+BoxType.BIG_BOX: "Caja grande"
+BoxType.MEGA_BOX: "Megacaja"
+BoxType.OMEGA_BOX: "Omegacaja"
+
+OrderState.PENDING: "Pendiente"
+OrderState.PAID: "Pagado"
+OrderState.RETURNED: "Devuelto"
+OrderState.CANCELLED: "Cancelado"

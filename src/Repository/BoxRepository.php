@@ -23,4 +23,19 @@ class BoxRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql);
         return $result->fetchAllAssociative();
     }
+
+    /**
+     * It returns all the boxes that are not deleted
+     *
+     * @return array<Box>
+     */
+    public function getAllBoxes(): array
+    {
+        return $this->createQueryBuilder('b')
+            ->select('b.id', 'b.name', 'b.price', 'b.quantity', 'b.type', 'b.pinned')
+            ->where('b.deleted = FALSE')
+            ->getQuery()
+            ->getResult();
+    }
+
 }

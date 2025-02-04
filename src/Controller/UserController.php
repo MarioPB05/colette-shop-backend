@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\user\CreateUserRequest;
+use App\DTO\user\TableUserResponse;
 use App\Entity\Client;
 use App\Entity\User;
 use App\Enum\UserRole;
@@ -56,6 +57,27 @@ final class UserController extends AbstractController{
         $entityManager->flush();
 
         return new JsonResponse(['status' => 'User created!'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/', name: 'user_list', methods: ['GET'])]
+    public function list(EntityManagerInterface $entityManager): JsonResponse
+    {
+        $users = $entityManager->getRepository(User::class)->findAll();
+
+        $data = [];
+
+        foreach ($users as $user) {
+            $data[] = new TableUserResponse(
+                $user->getId(),
+                $user->getClient()->getName(),
+                $user->getUsername(),
+                $user->getEmail(),
+                $user->getGems(),
+                $user->isEnabled()
+            );
+        }
+
+        return new JsonResponse($data, Response::HTTP_OK);
     }
 
 }
