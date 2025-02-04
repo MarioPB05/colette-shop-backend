@@ -22,4 +22,12 @@ final class BrawlerController extends AbstractController
         return $this->json($brawlers);
     }
 
+    #[Route('/list', name: 'get_all_brawlers_for_box_editor', methods: ['GET'])]
+    public function getAllBrawlersForBoxEditor(BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        $brawlers = $brawlerRepository->getAllBrawlersForBoxEditor();
+
+        return $this->json($brawlers);
+    }
+
 }
