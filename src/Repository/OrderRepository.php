@@ -16,10 +16,16 @@ class OrderRepository extends ServiceEntityRepository
         parent::__construct($registry, Order::class);
     }
 
-    public function getAllOrders(): array
+    public function getAllOrders(?string $brawlTag=null): array
     {
+        if ($brawlTag === null) {
+            $where = '';
+        } else {
+            $where = 'and u.brawl_tag = ' . $brawlTag;
+        }
+
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT 
+        $sql = "SELECT 
                     o.invoice_number, 
                     o.purchase_date, 
                     o.state, 
@@ -28,13 +34,13 @@ class OrderRepository extends ServiceEntityRepository
                     coalesce(od.discount, 0) as discount, 
                     sum(i.price) as total_price, 
                     sum(i.price) - coalesce(od.discount, 0) as total_with_discount
-                from "order" o
+                from 'order' o
                 left join order_discount od on o.id = od.order_id
-                left join "user" u on o.user_id = u.id
+                left join 'user' u on o.user_id = u.id
                 left join inventory i on o.id = i.order_id
                 left join brawler b on u.brawler_avatar = b.id 
-                where o.cancelled = false
-                group by o.id, u.username, b.image, od.discount, o.invoice_number, o.purchase_date, o.state';
+                where o.cancelled = false $where
+                group by o.id, u.username, b.image, od.discount, o.invoice_number, o.purchase_date, o.state";
 
         $result = $conn->executeQuery($sql);
 
