@@ -19,10 +19,10 @@ class OrderController extends AbstractController
         $this->orderRepository = $orderRepository;
     }
 
-    #[Route('/', name: 'order_list', methods: ['GET'])]
-    public function list(TranslatorInterface $translator): JsonResponse
+    #[Route('/{brawlTag}', name: 'order_list', methods: ['GET'])]
+    public function list(TranslatorInterface $translator, string $brawlTag): JsonResponse
     {
-        $orders = $this->orderRepository->getAllOrders();
+        $orders = $this->orderRepository->getAllOrders($brawlTag);
 
         return new JsonResponse(array_map(fn($order) => new TableOrderResponse(
             $order['invoice_number'],
