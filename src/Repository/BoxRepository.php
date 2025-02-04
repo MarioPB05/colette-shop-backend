@@ -15,4 +15,12 @@ class BoxRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Box::class);
     }
+
+    public function getAllBoxesShop()
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.price, b.type FROM box b';
+        $result = $conn->executeQuery($sql);
+        return $result->fetchAllAssociative();
+    }
 }
