@@ -22,6 +22,9 @@ class OrderController extends AbstractController
     #[Route('/{brawlTag}', name: 'order_list', methods: ['GET'])]
     public function list(TranslatorInterface $translator, string $brawlTag): JsonResponse
     {
+        if ($brawlTag === 'all') {
+            $brawlTag = null;
+        }
         $orders = $this->orderRepository->getAllOrders($brawlTag);
 
         return new JsonResponse(array_map(fn($order) => new TableOrderResponse(
