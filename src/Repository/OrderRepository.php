@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ *
  * @extends ServiceEntityRepository<Order>
  */
 class OrderRepository extends ServiceEntityRepository
@@ -16,33 +17,40 @@ class OrderRepository extends ServiceEntityRepository
         parent::__construct($registry, Order::class);
     }
 
-    public function getAllOrders(?string $brawlTag=null): array
+    /**
+     * Returns all orders but if brawlTag is provided, it returns only orders for that user.
+     * @param string|null $brawlTag
+     * @return array
+     */
+    public function getAllOrders(?string $brawlTag = null): array
     {
-        if ($brawlTag === null) {
-            $where = '';
-        } else {
-            $where = 'and u.brawl_tag = ' . $brawlTag;
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "SELECT 
+                o.invoice_number, 
+                o.purchase_date, 
+                o.state, 
+                u.username, 
+                b.image AS user_image,
+                COALESCE(od.discount, 0) AS discount, 
+                SUM(i.price) AS total_price, 
+                SUM(i.price) - SUM(COALESCE(od.discount, 0)) AS total_with_discount
+            FROM \"order\" o
+            LEFT JOIN order_discount od ON o.id = od.order_id
+            LEFT JOIN \"user\" u ON o.user_id = u.id
+            LEFT JOIN inventory i ON o.id = i.order_id
+            LEFT JOIN brawler b ON u.brawler_avatar = b.id
+            WHERE o.cancelled IS FALSE";
+
+        $params = [];
+        if ($brawlTag !== null) {
+            $sql .= " AND u.brawl_tag = :brawlTag";
+            $params['brawlTag'] = $brawlTag;
         }
 
-        $conn = $this->getEntityManager()->getConnection();
-        $sql = "SELECT 
-                    o.invoice_number, 
-                    o.purchase_date, 
-                    o.state, 
-                    u.username, 
-                    b.image as user_image,
-                    coalesce(od.discount, 0) as discount, 
-                    sum(i.price) as total_price, 
-                    sum(i.price) - coalesce(od.discount, 0) as total_with_discount
-                from 'order' o
-                left join order_discount od on o.id = od.order_id
-                left join 'user' u on o.user_id = u.id
-                left join inventory i on o.id = i.order_id
-                left join brawler b on u.brawler_avatar = b.id 
-                where o.cancelled = false $where
-                group by o.id, u.username, b.image, od.discount, o.invoice_number, o.purchase_date, o.state";
+        $sql .= " GROUP BY o.id, o.invoice_number, o.purchase_date, o.state, u.username, b.image, od.discount";
 
-        $result = $conn->executeQuery($sql);
+        $result = $conn->executeQuery($sql, $params);
 
         return $result->fetchAllAssociative();
     }
