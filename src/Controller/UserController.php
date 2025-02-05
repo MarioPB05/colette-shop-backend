@@ -71,7 +71,8 @@ final class UserController extends AbstractController{
         foreach ($users as $user) {
             $data[] = new TableUserResponse(
                 $user->getId(),
-                $user->getClient()->getName(),
+                $user->getClient()->getName() . ' ' . $user->getClient()->getSurname(),
+                $user->getUsername(),
                 $user->getBrawlTag(),
                 $user->getEmail(),
                 $user->getGems(),
@@ -109,7 +110,8 @@ final class UserController extends AbstractController{
             $user->getBrawlTag(),
             $user->getUsername(),
             $user->getEmail(),
-            $user->getGems(),
+            $user->getClient()->getDni(),
+            $user->getClient()->getBirthdate()->format('Y-m-d'),
             $user->isEnabled(),
             $user->getBrawlerAvatar()->getImage()
         ), Response::HTTP_OK);
