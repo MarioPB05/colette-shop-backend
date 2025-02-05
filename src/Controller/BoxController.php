@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[Route('/api/box')]
 final class BoxController extends AbstractController {
 
     #[Route('/', name: 'box_get_all', methods: ['GET'])]
