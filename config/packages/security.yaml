@@ -9,9 +9,9 @@ security:
                 class: App\Entity\User
                 property: username
     firewalls:
-        main:
-            lazy: true
-            provider: app_user_provider
+        api_login:
+            pattern: ^/api/login
+            stateless: true
             json_login:
                 check_path: /api/login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
@@ -19,13 +19,15 @@ security:
         api:
             pattern: ^/api/
             stateless: true
+            provider: app_user_provider
             jwt: ~
 
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: /api/box/test, roles: ROLE_USER }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: /api/user/register, roles: PUBLIC_ACCESS }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api, roles: PUBLIC_ACCESS }
 
 when@test:
     security:
