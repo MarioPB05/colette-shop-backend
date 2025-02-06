@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\box\BoxShopResponse;
+use App\DTO\box\DailyBoxShopResponse;
 use App\DTO\box\TableBoxResponse;
 use App\Entity\User;
 use App\Entity\Box;
@@ -34,6 +35,23 @@ final class BoxController extends AbstractController
             $result['popular'],
             $translator
         ), $boxRepository->getAllBoxesShop($user)));
+    }
+
+    #[Route('/list-daily', name: 'box_get_all_free_daily', methods: ['GET'])]
+    public function getAllFreeDailyBoxes(BoxRepository $boxRepository, TranslatorInterface $translator): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        return $this->json(array_map(fn($result) => new DailyBoxShopResponse(
+            $result['id'],
+            $result['name'],
+            $result['type'],
+            $result['favoritebrawlersinbox'],
+            $result['repeathours'],
+            $result['claimed'],
+            $translator
+        ), $boxRepository->getAllFreeDailyBoxesShop($user)));
     }
 
     #[Route('/', name: 'box_get_all', methods: ['GET'])]
