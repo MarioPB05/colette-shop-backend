@@ -68,4 +68,13 @@ class BrawlerRepository extends ServiceEntityRepository
 
         return $result->fetchOne();
     }
+
+    public function getAllBrawlersForBoxEditor(): array
+    {
+        return $this->createQueryBuilder('b')
+            ->select('b.id', 'b.name', 'b.image', 'r.name AS rarity')
+            ->join('b.rarity', 'r')
+            ->getQuery()
+            ->getResult();
+    }
 }

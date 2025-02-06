@@ -5,9 +5,12 @@ namespace App\Controller;
 use App\DTO\box\BoxShopResponse;
 use App\DTO\box\TableBoxResponse;
 use App\Entity\User;
+use App\Entity\Box;
 use App\Repository\BoxRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -45,6 +48,19 @@ final class BoxController extends AbstractController
             $result['pinned'],
             $translator
         ), $boxRepository->getAllBoxes()));
+    }
+
+    #[Route('/{id}', name: 'box_remove', methods: ['DELETE'])]
+    public function remove(Box $box, EntityManagerInterface $entityManager): JsonResponse
+    {
+        if ($box->isDeleted()) {
+            return $this->json(['message' => 'Box already removed'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $box->setDeleted(true);
+        $entityManager->flush();
+
+        return $this->json(['result' => true]);
     }
 
 }
