@@ -34,8 +34,25 @@ class BoxRepository extends ServiceEntityRepository
                 LEFT JOIN box_brawler bb on b.id = bb.box_id
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
                 LEFT JOIN inventory i on b.id = i.box_id
-                WHERE b.deleted = FALSE
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                WHERE b.deleted = FALSE and bd.box_id IS NULL
                 GROUP BY b.id';
+
+        $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
+        return $result->fetchAllAssociative();
+    }
+
+    public function getAllFreeDailyBoxesShop(User $user): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT b.id, b.name, b.type, count(ufb.brawler_id) as favoriteBrawlersInBox, bd.repeat_every_hours as repeatHours, (COUNT(i.id) > 0) AS claimed
+                FROM box b
+                JOIN box_daily bd on b.id = bd.box_id
+                LEFT JOIN box_brawler bb on b.id = bb.box_id
+                LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
+                LEFT JOIN inventory i on b.id = i.box_id and i.user_id = :userId and i.collect_date > NOW() - INTERVAL '1 hour' * bd.repeat_every_hours
+                WHERE b.deleted = FALSE
+                GROUP BY b.id, bd.repeat_every_hours";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
         return $result->fetchAllAssociative();
