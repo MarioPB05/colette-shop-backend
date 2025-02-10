@@ -318,7 +318,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return [$this->getRole()->name];
+        return ['ROLE_' . $this->getRole()->name];
     }
 
     public function eraseCredentials(): void {}
