@@ -36,6 +36,7 @@ class InventoryRepository extends ServiceEntityRepository
             
             select
                 day::date,
+                0,
                 0
             from generate_series(
                          date_trunc('day', current_date) - interval '29 days',
@@ -65,9 +66,9 @@ class InventoryRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
         $sql = "select
                     date(gt.date) as day,
-                    sum(abs(gt.gems)) as total_price
+                    sum(abs(gt.gems)) as gems
                 from  gem_transaction gt
-                where gt.date >= current_date - interval '29 days' and gt.gems < 0
+                where gt.date >= current_date - interval '29 days' and gt.gems > 0
                 group by day
                 
                 union
