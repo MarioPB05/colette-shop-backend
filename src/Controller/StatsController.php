@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\stat\GemStatResponse;
+use App\DTO\stat\InventoryStatResponse;
 use App\Repository\InventoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,7 +18,26 @@ final class StatsController extends AbstractController
     {
         $inventory = $inventoryRepository->inventoryStats();
 
-        return $this->json($inventory);
+        return $this->json(array_map(fn($stat) => new InventoryStatResponse(
+            $stat['day'],
+            $stat['boxes'],
+            $stat['total_price']
+        ), $inventory)
+
+        );
+    }
+
+    #[Route('/gems', name: 'get_gems_stat', methods: ['GET'])]
+    public function gemsStats(InventoryRepository $inventoryRepository): JsonResponse
+    {
+        $inventory = $inventoryRepository->gemStat();
+
+        return $this->json(
+            array_map(fn($stat) => new GemStatResponse(
+                $stat['day'],
+                $stat['gems']
+            ), $inventory)
+        );
     }
 
 }
