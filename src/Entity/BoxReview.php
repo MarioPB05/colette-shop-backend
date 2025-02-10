@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\BoxReviewRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: BoxReviewRepository::class)]
@@ -26,6 +27,9 @@ class BoxReview
     #[ORM\ManyToOne(inversedBy: 'boxReviews')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Box $box = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $post_date = null;
 
     public function getId(): ?int
     {
@@ -76,6 +80,18 @@ class BoxReview
     public function setBox(?Box $box): static
     {
         $this->box = $box;
+
+        return $this;
+    }
+
+    public function getPostDate(): ?\DateTimeInterface
+    {
+        return $this->post_date;
+    }
+
+    public function setPostDate(?\DateTimeInterface $post_date): static
+    {
+        $this->post_date = $post_date;
 
         return $this;
     }
