@@ -2,10 +2,8 @@
 
 namespace App\Controller;
 
-use App\DTO\brawler\TableBrawlerResponse;
+use App\Entity\User;
 use App\Repository\BrawlerRepository;
-use App\Repository\UserBrawlerRepository;
-use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,6 +24,14 @@ final class BrawlerController extends AbstractController
     public function getAllBrawlersForBoxEditor(BrawlerRepository $brawlerRepository): JsonResponse
     {
         $brawlers = $brawlerRepository->getAllBrawlersForBoxEditor();
+
+        return $this->json($brawlers);
+    }
+
+    #[Route('/box/{boxId}', name: 'get_all_brawlers_probability_from_box', methods: ['GET'])]
+    public function getAllBrawlersProbabilityByBox(int $boxId, BrawlerRepository $brawlerRepository, User $user): JsonResponse
+    {
+        $brawlers = $brawlerRepository->getBrawlersProbabilityFromBox($boxId, $user);
 
         return $this->json($brawlers);
     }
