@@ -68,7 +68,7 @@ class InventoryRepository extends ServiceEntityRepository
                     date(gt.date) as day,
                     sum(abs(gt.gems)) as gems
                 from  gem_transaction gt
-                where gt.date >= current_date - interval '29 days' and gt.gems > 0
+                where gt.date >= current_date - interval '29 days' and gt.gems < 0
                 group by day
                 
                 union
