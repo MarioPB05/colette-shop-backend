@@ -45,6 +45,14 @@ final class AuthController extends AbstractController
         return new JsonResponse(['valid' => $valid]);
     }
 
+    #[Route('/verify-username/{username}', name: 'app_auth_verify_username', methods: ['GET'])]
+    public function verifyUsername(EntityManagerInterface $entityManager, string $username): JsonResponse
+    {
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+
+        return new JsonResponse(['exists' => $user !== null]);
+    }
+
     #[Route('/register', name: 'auth_register', methods: ['POST'])]
     public function register(
         UserPasswordHasherInterface $passwordHasher,
