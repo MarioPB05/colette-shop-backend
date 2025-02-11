@@ -87,13 +87,12 @@ class BoxRepository extends ServiceEntityRepository
      */
     public function getBoxDetails(int $boxId): array
     {
-        return $this->createQueryBuilder('b')
-            ->select('b.id', 'b.name', 'b.price', 'b.type', 'b.quantity as boxes_left', 'b.brawler_quantity')
-            ->where('b.deleted = FALSE')
-            ->andWhere('b.id = :boxId')
-            ->setParameter('boxId', $boxId)
-            ->getQuery()
-            ->getResult();
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily
+                FROM box b
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                WHERE b.deleted = FALSE and b.id = :boxId';
+        return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
 
 }

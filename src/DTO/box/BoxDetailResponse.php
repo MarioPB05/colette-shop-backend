@@ -13,8 +13,9 @@ class BoxDetailResponse
     public string $type;
     public int $boxes_left;
     public int $brawler_quantity;
+    public bool $is_daily;
 
-    public function __construct(int $id, string $name, float $price, int $type, int $boxes_left, int $brawler_quantity, TranslatorInterface $translator)
+    public function __construct(int $id, string $name, float $price, string $type, int $boxes_left, int $brawler_quantity, bool $is_daily, TranslatorInterface $translator)
     {
         $this->id = $id;
         $this->name = $name;
@@ -22,5 +23,6 @@ class BoxDetailResponse
         $this->type = $translator->trans('BoxType.' . BoxType::tryFrom($type)->name, domain: 'enums');
         $this->boxes_left = $boxes_left;
         $this->brawler_quantity = $brawler_quantity;
+        $this->is_daily = $is_daily;
     }
 }

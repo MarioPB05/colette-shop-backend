@@ -94,6 +94,7 @@ final class BoxController extends AbstractController
             $boxDetails['type'],
             $boxDetails['boxes_left'],
             $boxDetails['brawler_quantity'],
+            $boxDetails['is_daily'],
             $translator
         ));
     }
