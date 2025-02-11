@@ -29,8 +29,11 @@ final class BrawlerController extends AbstractController
     }
 
     #[Route('/box/{boxId}', name: 'get_all_brawlers_probability_from_box', methods: ['GET'])]
-    public function getAllBrawlersProbabilityByBox(int $boxId, BrawlerRepository $brawlerRepository, User $user): JsonResponse
+    public function getAllBrawlersProbabilityByBox(int $boxId, BrawlerRepository $brawlerRepository): JsonResponse
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
         $brawlers = $brawlerRepository->getBrawlersProbabilityFromBox($boxId, $user);
 
         return $this->json($brawlers);
