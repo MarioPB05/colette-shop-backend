@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\box\BoxDetailResponse;
 use App\DTO\box\BoxShopResponse;
 use App\DTO\box\DailyBoxShopResponse;
 use App\DTO\box\TableBoxResponse;
@@ -79,6 +80,22 @@ final class BoxController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['result' => true]);
+    }
+
+    #[Route('/{id}', name: 'box_get_details', methods: ['GET'])]
+    public function getDetails(int $id, BoxRepository $boxRepository, TranslatorInterface $translator): JsonResponse
+    {
+        $boxDetails = $boxRepository->getBoxDetails($id);
+
+        return $this->json(new BoxDetailResponse(
+            $boxDetails['id'],
+            $boxDetails['name'],
+            $boxDetails['price'],
+            $boxDetails['type'],
+            $boxDetails['boxes_left'],
+            $boxDetails['brawler_quantity'],
+            $translator
+        ));
     }
 
 }

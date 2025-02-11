@@ -79,4 +79,21 @@ class BoxRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * It returns the details of a box
+     *
+     * @param int $boxId
+     * @return array
+     */
+    public function getBoxDetails(int $boxId): array
+    {
+        return $this->createQueryBuilder('b')
+            ->select('b.id', 'b.name', 'b.price', 'b.type', 'b.quantity as boxes_left', 'b.brawler_quantity')
+            ->where('b.deleted = FALSE')
+            ->andWhere('b.id = :boxId')
+            ->setParameter('boxId', $boxId)
+            ->getQuery()
+            ->getResult();
+    }
+
 }
