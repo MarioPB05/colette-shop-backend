@@ -21,11 +21,4 @@ final class BoxReviewController extends AbstractController
         return $this->json($reviews);
     }
 
-    #[Route('/{boxId}', name: 'prueba', methods: ['GET'])]
-    public function prueba(int $boxId, BoxRepository $boxRepository): JsonResponse
-    {
-        $boxDetails = $boxRepository->getBoxDetails($boxId);
-
-        return $this->json("Hola mundo");
-    }
 }
