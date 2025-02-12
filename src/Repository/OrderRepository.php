@@ -54,4 +54,53 @@ class OrderRepository extends ServiceEntityRepository
 
         return $result->fetchAllAssociative();
     }
+
+    public function getOrderDetails(int $orderId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "select
+                    o.invoice_number,
+                    o.purchase_date,
+                    o.state,
+                    u.id as from_id,
+                    u.username as from_username,
+                    c.name as from_name,
+                    c.surname as from_surname,
+                    c.dni as from_dni,
+                    case
+                        when i.user_id != o.user_id then u2.id
+                        end as to_id,
+                    case
+                        when i.user_id != o.user_id then u2.username
+                        end as to_username,
+                    case
+                        when i.user_id != o.user_id then c2.name
+                        end as to_name,
+                    case
+                        when i.user_id != o.user_id then c2.surname
+                        end as to_surname,
+                    case
+                        when i.user_id != o.user_id then c2.dni
+                        end as to_dni,
+                    coalesce(od.discount, 0) as discount,
+                    sum(i.price) as sub_total,
+                    sum(i.price) - coalesce(od.discount, 0) as total,
+                    u.gems,
+                    b.image as user_image
+                from \"order\" o
+                         left join order_discount od on o.id = od.order_id
+                         left join \"user\" u on o.user_id = u.id
+                         left join client c on u.client_id = c.id
+                         left join inventory i on o.id = i.order_id
+                         left join \"user\" u2 on i.user_id = u2.id
+                         left join client c2 on u2.client_id = c2.id
+                         left join brawler b on u.brawler_avatar = b.id
+                where o.cancelled is false and o.id = :orderId
+                group by o.id, o.invoice_number, i.user_id, o.purchase_date, o.state, u.id, u.username, c.name, c.surname, c.dni, u2.id, u2.username, c2.name, c2.surname, c2.dni, od.discount, u.gems, b.image";
+
+        $result = $conn->executeQuery($sql, ['orderId' => $orderId]);
+
+        return $result->fetchAllAssociative();
+
+    }
 }
