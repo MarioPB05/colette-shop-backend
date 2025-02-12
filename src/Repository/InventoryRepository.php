@@ -92,4 +92,25 @@ class InventoryRepository extends ServiceEntityRepository
 
         return $result->fetchAllAssociative();
     }
+
+    public function getInventoryForOrderDetails(int $order_id)
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "select
+                    i.id,
+                    i.price,
+                    i.collect_date as collect_date,
+                    i.open_date as open_date,
+                    b.name as box_name,
+                    b.type as box_type
+                from inventory i
+                join box b on i.box_id = b.id
+                where i.order_id = :order_id";
+
+        $result = $conn->executeQuery($sql, ['order_id' => $order_id]);
+
+        return $result->fetchAllAssociative();
+    }
+
+
 }
