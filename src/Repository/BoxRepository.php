@@ -29,7 +29,7 @@ class BoxRepository extends ServiceEntityRepository
     public function getAllBoxesShop(User $user): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxesLeft, count(ufb.brawler_id) as favoriteBrawlersInBox, b.pinned, (COUNT(i.id) > 100) AS popular
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, count(ufb.brawler_id) as favorite_brawlers_in_box, b.pinned, (COUNT(i.id) > 100) AS popular
                 FROM box b
                 LEFT JOIN box_brawler bb on b.id = bb.box_id
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
@@ -42,10 +42,17 @@ class BoxRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
+    /**
+     * It returns all the free daily boxes that are going to be shown in the shop
+     *
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
     public function getAllFreeDailyBoxesShop(User $user): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = "SELECT b.id, b.name, b.type, count(ufb.brawler_id) as favoriteBrawlersInBox, bd.repeat_every_hours as repeatHours, (COUNT(i.id) > 0) AS claimed
+        $sql = "SELECT b.id, b.name, b.type, count(ufb.brawler_id) as favorite_brawlers_in_box, bd.repeat_every_hours, (COUNT(i.id) > 0) AS claimed
                 FROM box b
                 JOIN box_daily bd on b.id = bd.box_id
                 LEFT JOIN box_brawler bb on b.id = bb.box_id
@@ -70,6 +77,22 @@ class BoxRepository extends ServiceEntityRepository
             ->where('b.deleted = FALSE')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * It returns the details of a box
+     *
+     * @param int $boxId
+     * @return array
+     */
+    public function getBoxDetails(int $boxId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily
+                FROM box b
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                WHERE b.deleted = FALSE and b.id = :boxId';
+        return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
 
 }

@@ -11,17 +11,17 @@ class DailyBoxShopResponse
     public int $id;
     public string $name;
     public string $type;
-    public int $favoriteBrawlersInBox;
-    public int $repeatHours;
+    public int $favorite_brawlers_in_box;
+    public int $repeat_every_hours;
     public bool $claimed;
 
-    public function __construct(int $id, string $name, string $type, int $favoriteBrawlersInBox, int $repeatHours, bool $claimed, TranslatorInterface $translator)
+    public function __construct(int $id, string $name, string $type, int $favorite_brawlers_in_box, int $repeat_every_hours, bool $claimed, TranslatorInterface $translator)
     {
         $this->id = $id;
         $this->name = $name;
         $this->type = $translator->trans('BoxType.' . BoxType::tryFrom($type)->name, domain: 'enums');
-        $this->favoriteBrawlersInBox = $favoriteBrawlersInBox;
-        $this->repeatHours = $repeatHours;
+        $this->favorite_brawlers_in_box = $favorite_brawlers_in_box;
+        $this->repeat_every_hours = $repeat_every_hours;
         $this->claimed = $claimed;
     }
 }

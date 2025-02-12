@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\box\BoxDetailResponse;
 use App\DTO\box\BoxShopResponse;
 use App\DTO\box\DailyBoxShopResponse;
 use App\DTO\box\TableBoxResponse;
@@ -29,8 +30,8 @@ final class BoxController extends AbstractController
             $result['name'],
             $result['price'],
             $result['type'],
-            $result['boxesleft'],
-            $result['favoritebrawlersinbox'],
+            $result['boxes_left'],
+            $result['favorite_brawlers_in_box'],
             $result['pinned'],
             $result['popular'],
             $translator
@@ -47,8 +48,8 @@ final class BoxController extends AbstractController
             $result['id'],
             $result['name'],
             $result['type'],
-            $result['favoritebrawlersinbox'],
-            $result['repeathours'],
+            $result['favorite_brawlers_in_box'],
+            $result['repeat_every_hours'],
             $result['claimed'],
             $translator
         ), $boxRepository->getAllFreeDailyBoxesShop($user)));
@@ -79,6 +80,23 @@ final class BoxController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['result' => true]);
+    }
+
+    #[Route('/{id}', name: 'box_get_details', methods: ['GET'])]
+    public function getDetails(int $id, BoxRepository $boxRepository, TranslatorInterface $translator): JsonResponse
+    {
+        $boxDetails = $boxRepository->getBoxDetails($id);
+
+        return $this->json(new BoxDetailResponse(
+            $boxDetails['id'],
+            $boxDetails['name'],
+            $boxDetails['price'],
+            $boxDetails['type'],
+            $boxDetails['boxes_left'],
+            $boxDetails['brawler_quantity'],
+            $boxDetails['is_daily'],
+            $translator
+        ));
     }
 
 }
