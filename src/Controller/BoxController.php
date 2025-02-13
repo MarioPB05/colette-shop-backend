@@ -51,6 +51,7 @@ final class BoxController extends AbstractController
             $result['favorite_brawlers_in_box'],
             $result['repeat_every_hours'],
             $result['claimed'],
+            $result['last_claimed'],
             $translator
         ), $boxRepository->getAllFreeDailyBoxesShop($user)));
     }
