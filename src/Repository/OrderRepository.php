@@ -27,6 +27,7 @@ class OrderRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = "SELECT 
+                o.id,
                 o.invoice_number, 
                 o.purchase_date, 
                 o.state, 
@@ -100,7 +101,7 @@ class OrderRepository extends ServiceEntityRepository
 
         $result = $conn->executeQuery($sql, ['orderId' => $orderId]);
 
-        return $result->fetchAllAssociative();
+        return $result->fetchAssociative();
 
     }
 }
