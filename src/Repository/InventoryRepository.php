@@ -97,10 +97,9 @@ class InventoryRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = "select
-                    i.id,
+                    b.id,
                     i.price,
                     i.collect_date as collect_date,
-                    i.open_date as open_date,
                     b.name as box_name,
                     b.type as box_type
                 from inventory i
