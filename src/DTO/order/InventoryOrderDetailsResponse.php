@@ -7,7 +7,6 @@ class InventoryOrderDetailsResponse
     public int $id;
     public string $price;
     public string $collectDate;
-    public string $openDate;
     public string $boxName;
     public string $boxType;
 
@@ -45,16 +44,6 @@ class InventoryOrderDetailsResponse
         $this->collectDate = $collectDate;
     }
 
-    public function getOpenDate(): string
-    {
-        return $this->openDate;
-    }
-
-    public function setOpenDate(string $openDate): void
-    {
-        $this->openDate = $openDate;
-    }
-
     public function getBoxName(): string
     {
         return $this->boxName;
@@ -74,6 +63,8 @@ class InventoryOrderDetailsResponse
     {
         $this->boxType = $boxType;
     }
+
+
 
 
 
