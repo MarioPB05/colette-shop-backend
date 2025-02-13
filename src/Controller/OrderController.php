@@ -34,6 +34,7 @@ class OrderController extends AbstractController
         $orders = $this->orderRepository->getAllOrders($brawlTag);
 
         return new JsonResponse(array_map(fn($order) => new TableOrderResponse(
+            $order['id'],
             $order['invoice_number'],
             $order['purchase_date'],
             $order['state'],
@@ -46,22 +47,19 @@ class OrderController extends AbstractController
         ), $orders));
     }
 
-    #[Route('/details/{order_id}', name: 'get_inventory_by_order', methods: ['GET'])]
+    #[Route('/details/{orderId}', name: 'get_inventory_by_order', methods: ['GET'])]
     public function getAllOrderDetails(
         InventoryRepository $inventoryRepository,
         OrderRepository $orderRepository,
         TranslatorInterface $translator,
-        int $order_id
+        int $orderId
     ): JsonResponse {
-        $orderDetails = $orderRepository->getOrderDetails($order_id);
-        $inventory = $inventoryRepository->getInventoryForOrderDetails($order_id);
+        $orderDetails = $orderRepository->getOrderDetails($orderId);
+        $inventory = $inventoryRepository->getInventoryForOrderDetails($orderId);
 
-        $orderResponseList = [];
-
-        for ($i = 0; $i < count($orderDetails); $i++) {
             $ordersResponse = new OrderDetailsResponse();
 
-            $order = $orderDetails[$i];
+            $order = $orderDetails;
             $orderResponseFrom = new OrderParticipantResponse();
             $orderResponseFrom->setUsername($order['from_username']);
             $orderResponseFrom->setName($order['from_name']);
@@ -91,23 +89,18 @@ class OrderController extends AbstractController
             $ordersResponse->setState($translator->trans('OrderState.' . OrderState::tryFrom($order['state'])->name, domain: 'enums'));
 
             $inventoryResponse = [];
-            for ($j = 0; $j < count($inventory); $j++) {
-                $inventoryResponse[$j] = new InventoryOrderDetailsResponse();
-                $inventoryResponse[$j]->setId($inventory[$j]['id']);
-                $inventoryResponse[$j]->setCollectDate($inventory[$j]['collect_date']);
-                $inventoryResponse[$j]->setPrice($inventory[$j]['price']);
-                $inventoryResponse[$j]->setBoxName($inventory[$j]['box_name']);
-                $inventoryResponse[$j]->setBoxType($translator->trans('BoxType.' . BoxType::tryFrom($inventory[$j]['box_type'])->name, domain: 'enums'));
-                $inventoryResponse[$j]->setOpenDate($inventory[$j]['open_date']);
+            for ($i = 0; $i < count($inventory); $i++) {
+                $inventoryResponse[$i] = new InventoryOrderDetailsResponse();
+                $inventoryResponse[$i]->setId($inventory[$i]['id']);
+                $inventoryResponse[$i]->setCollectDate($inventory[$i]['collect_date']);
+                $inventoryResponse[$i]->setPrice($inventory[$i]['price']);
+                $inventoryResponse[$i]->setBoxName($inventory[$i]['box_name']);
+                $inventoryResponse[$i]->setBoxType($translator->trans('BoxType.' . BoxType::tryFrom($inventory[$i]['box_type'])->name, domain: 'enums'));
             }
 
             $ordersResponse->setInventory($inventoryResponse);
 
-            $orderResponseList[] = $ordersResponse;
-
-        }
-
-        return new JsonResponse($orderResponseList);
+        return new JsonResponse($ordersResponse);
     }
 
 }
