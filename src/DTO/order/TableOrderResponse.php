@@ -7,6 +7,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class TableOrderResponse
 {
+    public int $id;
     public string $invoice_number;
     public string $purchase_date;
     public string $state;
@@ -17,6 +18,7 @@ class TableOrderResponse
     public float $total_with_discount;
 
     public function __construct(
+        int                 $id,
         string              $invoice_number,
         string              $purchase_date,
         string              $state,
@@ -28,6 +30,7 @@ class TableOrderResponse
         TranslatorInterface $translator
     )
     {
+        $this->id = $id;
         $this->invoice_number = $invoice_number;
         $this->purchase_date = $purchase_date;
         $this->state = $translator->trans('OrderState.' . OrderState::tryFrom($state)->name, domain: 'enums');
