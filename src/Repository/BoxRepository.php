@@ -53,13 +53,14 @@ class BoxRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = "SELECT b.id, b.name, b.type, count(ufb.brawler_id) as favorite_brawlers_in_box, bd.repeat_every_hours, (COUNT(i.id) > 0) AS claimed
+                , LAST_VALUE(i.collect_date) OVER (PARTITION BY b.id ORDER BY i.collect_date DESC) as last_claimed
                 FROM box b
                 JOIN box_daily bd on b.id = bd.box_id
                 LEFT JOIN box_brawler bb on b.id = bb.box_id
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
                 LEFT JOIN inventory i on b.id = i.box_id and i.user_id = :userId and i.collect_date > NOW() - INTERVAL '1 hour' * bd.repeat_every_hours
                 WHERE b.deleted = FALSE
-                GROUP BY b.id, bd.repeat_every_hours";
+                GROUP BY b.id, bd.repeat_every_hours, i.collect_date";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
         return $result->fetchAllAssociative();
@@ -88,10 +89,12 @@ class BoxRepository extends ServiceEntityRepository
     public function getBoxDetails(int $boxId): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(i.id) > 0) AS claimed 
                 FROM box b
                 LEFT JOIN box_daily bd on b.id = bd.box_id
-                WHERE b.deleted = FALSE and b.id = :boxId';
+                LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours
+                WHERE b.deleted = FALSE and b.id = :boxId
+                GROUP BY b.id, bd.box_id';
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
 
