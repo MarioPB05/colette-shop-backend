@@ -63,9 +63,4 @@ class InventoryOrderDetailsResponse
     {
         $this->boxType = $boxType;
     }
-
-
-
-
-
 }
