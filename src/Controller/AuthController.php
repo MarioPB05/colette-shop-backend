@@ -9,13 +9,19 @@ use App\Enum\UserRole;
 use DateMalformedStringException;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Random\RandomException;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 #[Route('/api/auth')]
 final class AuthController extends AbstractController
@@ -73,6 +79,7 @@ final class AuthController extends AbstractController
         $client->setDni($createUserRequest->dni);
 
         $user = new User();
+        $user->setEnabled(false); // Required to verify email
         $user->setUsername($createUserRequest->username);
         $user->setEmail($createUserRequest->email);
         $user->setPassword($passwordHasher->hashPassword($user, $createUserRequest->password));
@@ -96,6 +103,82 @@ final class AuthController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['status' => 'success'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/generate-verify-email', name: 'app_auth_verify_email', methods: ['GET'])]
+    public function sendVerifyEmail(JWTTokenManagerInterface $JWTManager, MailerInterface  $mailer): JsonResponse {
+        try {
+            /** @var User $user */
+            $user = $this->getUser();
+
+            if ($user === null) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+            }
+
+            if ($user->isEnabled()) {
+                return new JsonResponse(['status' => 'error', 'message' => 'El usuario ya ha sido verificado'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $payload = [
+                'username_id' => $user->getId(),
+                'exp' => (new DateTime())->modify('+1 day')->getTimestamp()
+            ];
+
+            $verifyToken = $JWTManager->createFromPayload($user, $payload);
+
+            if (empty($verifyToken)) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Error al generar el token'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $email = (new TemplatedEmail())
+                ->from('developers.daw.seville@gmail.com')
+                ->to($user->getEmail())
+                ->subject('Bienvenido a Colette\'s Shop | Verifica tu cuenta')
+                ->htmlTemplate('verify-email.html.twig')
+                ->context([
+                    'username' => $user->getUsername(),
+                    'token' => $verifyToken
+                ]);
+
+            $mailer->send($email);
+
+            return new JsonResponse(['status' => 'success'], Response::HTTP_OK);
+        } catch (DateMalformedStringException $e) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Error al generar el token'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (TransportExceptionInterface $e) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Error al enviar el correo'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/verify-email', name: 'app_auth_verify_email_token', methods: ['GET'])]
+    public function verifyEmail(Request $request, EntityManagerInterface $entityManager, JWTTokenManagerInterface $JWTManager): JsonResponse {
+        /** @var TokenInterface $token */
+        $token = $request->query->get('token');
+
+        if (empty($token)) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Token no encontrado'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $payload = $JWTManager->parse($token);
+
+        if (count($payload) === 0) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Token inválido'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $entityManager->getRepository(User::class)->find($payload['username_id']);
+
+        if ($user === null) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($user->isEnabled()) {
+            return new JsonResponse(['status' => 'error', 'message' => 'El usuario ya ha sido verificado'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user->setEnabled(true);
+        $entityManager->flush();
+
+        return new JsonResponse(['status' => 'success'], Response::HTTP_OK);
     }
 
 }
