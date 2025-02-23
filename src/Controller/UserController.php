@@ -55,7 +55,7 @@ final class UserController extends AbstractController{
         return new JsonResponse(['status' => true], Response::HTTP_OK);
     }
 
-    #[Route('/{brawlTag}', name: 'user_show', methods: ['GET'])]
+    #[Route('/find/{brawlTag}', name: 'user_show', methods: ['GET'])]
     public function show(#[MapEntity(mapping: ['brawlTag' => 'brawl_tag'])] User $user): JsonResponse
     {
         return new JsonResponse(new ShowUserResponse(
@@ -73,33 +73,34 @@ final class UserController extends AbstractController{
     }
 
     #[Route('/details', name: 'user_details', methods: ['GET'])]
-    public function getUserDetails(): JsonResponse
+    public function getUserDetails(UserRepository $userRepository): JsonResponse
     {
-        return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+        /** @var User $user */
+        $user = $this->getUser();
 
-//        $user = $this->getUser();
-//        if (!$user) {
-//            return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
-//        }
-//        $userDetails = $userRepository->getUserDetails($user);
-//
-//        $newUserDetails = new UserDetailsResponse();
-//        $newUserDetails->setId($userDetails['id']);
-//        $newUserDetails->setUsername($userDetails['username']);
-//        $newUserDetails->setBrawlTag($userDetails['brawltag']);
-//        $newUserDetails->setName($userDetails['name']);
-//        $newUserDetails->setSurname($userDetails['surname']);
-//        $newUserDetails->setBirthDate($userDetails['birthdate']);
-//        $newUserDetails->setDni($userDetails['dni']);
-//        $newUserDetails->setEmail($userDetails['email']);
-//        $newUserDetails->setGems($userDetails['gems']);
-//        $newUserDetails->setOpenBoxes($userDetails['openboxes']);
-//        $newUserDetails->setFavouriteBrawlers($userDetails['favouritebrawlers']);
-//        $newUserDetails->setTrophies($userDetails['trophies']);
-//        $newUserDetails->setBrawlers($userDetails['brawlers']);
-//        $newUserDetails->setGifts($userDetails['gifts']);
-//
-//        return new JsonResponse($newUserDetails, Response::HTTP_OK);
+        if (!$user) {
+            return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+        }
+
+        $userDetails = $userRepository->getUserDetails($user);
+
+        $newUserDetails = new UserDetailsResponse();
+        $newUserDetails->setId($userDetails['id']);
+        $newUserDetails->setUsername($userDetails['username']);
+        $newUserDetails->setBrawlTag($userDetails['brawltag']);
+        $newUserDetails->setName($userDetails['name']);
+        $newUserDetails->setSurname($userDetails['surname']);
+        $newUserDetails->setBirthDate($userDetails['birthdate']);
+        $newUserDetails->setDni($userDetails['dni']);
+        $newUserDetails->setEmail($userDetails['email']);
+        $newUserDetails->setGems($userDetails['gems']);
+        $newUserDetails->setOpenBoxes($userDetails['openboxes']);
+        $newUserDetails->setFavouriteBrawlers($userDetails['favouritebrawlers']);
+        $newUserDetails->setTrophies($userDetails['trophies']);
+        $newUserDetails->setBrawlers($userDetails['brawlers']);
+        $newUserDetails->setGifts($userDetails['gifts']);
+
+        return new JsonResponse($newUserDetails, Response::HTTP_OK);
     }
 
 }
