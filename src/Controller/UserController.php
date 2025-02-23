@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\DTO\user\ShowUserResponse;
 use App\DTO\user\TableUserResponse;
+use App\DTO\user\UserDetailsResponse;
 use App\Entity\User;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +20,6 @@ final class UserController extends AbstractController{
     #[Route('/', name: 'user_list', methods: ['GET'])]
     public function list(EntityManagerInterface $entityManager): JsonResponse
     {
-
         $users = $entityManager->getRepository(User::class)->findAll();
 
         $data = [];
@@ -69,6 +70,36 @@ final class UserController extends AbstractController{
             $user->isEnabled(),
             $user->getBrawlerAvatar()->getImage()
         ), Response::HTTP_OK);
+    }
+
+    #[Route('/details', name: 'user_details', methods: ['GET'])]
+    public function getUserDetails(): JsonResponse
+    {
+        return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+
+//        $user = $this->getUser();
+//        if (!$user) {
+//            return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+//        }
+//        $userDetails = $userRepository->getUserDetails($user);
+//
+//        $newUserDetails = new UserDetailsResponse();
+//        $newUserDetails->setId($userDetails['id']);
+//        $newUserDetails->setUsername($userDetails['username']);
+//        $newUserDetails->setBrawlTag($userDetails['brawltag']);
+//        $newUserDetails->setName($userDetails['name']);
+//        $newUserDetails->setSurname($userDetails['surname']);
+//        $newUserDetails->setBirthDate($userDetails['birthdate']);
+//        $newUserDetails->setDni($userDetails['dni']);
+//        $newUserDetails->setEmail($userDetails['email']);
+//        $newUserDetails->setGems($userDetails['gems']);
+//        $newUserDetails->setOpenBoxes($userDetails['openboxes']);
+//        $newUserDetails->setFavouriteBrawlers($userDetails['favouritebrawlers']);
+//        $newUserDetails->setTrophies($userDetails['trophies']);
+//        $newUserDetails->setBrawlers($userDetails['brawlers']);
+//        $newUserDetails->setGifts($userDetails['gifts']);
+//
+//        return new JsonResponse($newUserDetails, Response::HTTP_OK);
     }
 
 }
