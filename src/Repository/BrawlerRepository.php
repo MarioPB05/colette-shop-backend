@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\BoxBrawler;
 use App\Entity\Brawler;
 use App\Entity\User;
 use App\Entity\UserBrawler;
@@ -100,5 +101,20 @@ class BrawlerRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $user->getId()]);
 
         return $result->fetchAllAssociative();
+    }
+
+    public function getUserProbabilityBrawlersFromBox(int $box_id, int $user_id): array
+    {
+        return $this->createQueryBuilder('b')
+            ->select('b.id', 'b.name', 'b.image', 'b.model_image', 'bb.probability', 'COALESCE(SUM(ub.quantity), 0) as user_quantity', 'r.id as rarity_id')
+            ->join(BoxBrawler::class, 'bb', 'WITH', 'bb.brawler = b.id')
+            ->leftJoin(UserBrawler::class, 'ub', 'WITH', 'ub.brawler = b.id')
+            ->join('b.rarity', 'r')
+            ->where('bb.box = :box_id and (ub.user = :user_id or ub.user is null)')
+            ->groupBy('b.id', 'bb.probability', 'r.id')
+            ->setParameter('box_id', $box_id)
+            ->setParameter('user_id', $user_id)
+            ->getQuery()
+            ->getResult();
     }
 }
