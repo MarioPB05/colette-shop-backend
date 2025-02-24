@@ -118,14 +118,16 @@ final class UserController extends AbstractController{
 
         $brawlers = $userBrawlerRepository->getBrawlers($user);
 
-        for ($i = 0; $i < count($brawlers); $i++) {
-            $brawlers[$i] = new BrawlerUserDetailsResponse();
-            $brawlers[$i]->setBrawlerId($brawlers[$i]['brawler_id']);
-            $brawlers[$i]->setName($brawlers[$i]['name']);
-            $brawlers[$i]->setImage($brawlers[$i]['image']);
-            $brawlers[$i]->setModelImage($brawlers[$i]['model_image']);
+        $brawlerResponses = [];
+        foreach ($brawlers as $brawler) {
+            $brawlerResponse = new BrawlerUserDetailsResponse();
+            $brawlerResponse->setBrawlerId($brawler['brawler_id']);
+            $brawlerResponse->setName($brawler['name']);
+            $brawlerResponse->setImage($brawler['image']);
+            $brawlerResponse->setModelImage($brawler['model_image']);
+            $brawlerResponses[] = $brawlerResponse;
         }
 
-        return new JsonResponse($brawlers, Response::HTTP_OK);
+        return new JsonResponse($brawlerResponses, Response::HTTP_OK);
     }
 }

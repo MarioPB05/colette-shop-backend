@@ -18,7 +18,7 @@ class UserDetailsResponse
     public int $favouriteBrawlers;
     public int $brawlers; // the number of brawlers that the user has
     public int $gifts; // the number of gifts that the user sends
-    public string $brawlerAvatar;
+    public int $brawlerAvatar;
 
     public function __construct()
     {
