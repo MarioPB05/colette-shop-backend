@@ -36,6 +36,9 @@ class UserRepository extends ServiceEntityRepository
             u.id,
             u.username,
             u.brawl_tag as brawltag,
+            (select b.model_image
+             from brawler b
+             where b.id = u.brawler_avatar) as brawleravatar,
             c.name,
             c.surname,
             to_char(c.birthdate, 'yyyy-mm-dd') as birthdate,
