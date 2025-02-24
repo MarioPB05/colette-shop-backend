@@ -17,6 +17,23 @@ class InventoryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Returns the inventory box with the given id
+     *
+     * @param int $id
+     * @return array
+     */
+    public function getInventoryBox(int $id): array
+    {
+        return $this->createQueryBuilder('i')
+            ->select('i.id', 'b.type', 'b.brawler_quantity', 'i.open')
+            ->join('i.box', 'b')
+            ->where('i.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getSingleResult();
+    }
+
+    /**
      * Returns the number of boxes collected per day in the last 30 days
      * @return Inventory[]
      */
