@@ -26,10 +26,10 @@ final class InventoryController extends AbstractController
         $result = $inventoryRepository->getInventoryBox($id);
 
         if ($result) {
-            print_r($result);
             return $this->json(new InventoryBoxResponse(
                 $result['id'],
-                $result['type']->getType(),
+                $result['box_id'],
+                $result['type'],
                 $result['brawler_quantity'],
                 $result['open'],
                 $translator
