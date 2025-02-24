@@ -21,9 +21,9 @@ class UserBrawlerRepository extends ServiceEntityRepository
     /**
      * Returns the brawlers that the user has.
      * @param User $user
-     * @return Brawler[]
+     * @return array
      */
-    public function getBrawlers(User $user): Brawler
+    public function getBrawlers(User $user): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -33,10 +33,8 @@ class UserBrawlerRepository extends ServiceEntityRepository
                 left join public.brawler b on b.id = ub.brawler_id
                 where ub.user_id = :userId;";
 
-        $stmt = $conn->prepare($sql);
+        $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
 
-        $stmt->execute(['userId' => $user->getId()]);
-
-        return $stmt->fetchAllAssociative();
+        return $result->fetchAllAssociative();
     }
 }
