@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\DTO\brawler\BrawlerUserDetailsResponse;
 use App\DTO\user\ShowUserResponse;
 use App\DTO\user\TableUserResponse;
 use App\DTO\user\UserDetailsResponse;
 use App\Entity\User;
+use App\Repository\UserBrawlerRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -99,8 +101,31 @@ final class UserController extends AbstractController{
         $newUserDetails->setTrophies($userDetails['trophies']);
         $newUserDetails->setBrawlers($userDetails['brawlers']);
         $newUserDetails->setGifts($userDetails['gifts']);
+        $newUserDetails->setBrawlerAvatar($userDetails['brawleravatar']);
 
         return new JsonResponse($newUserDetails, Response::HTTP_OK);
     }
 
+    #[Route('/details/brawlers', name: 'user_brawlers', methods: ['GET'])]
+    public function getBrawlers(UserBrawlerRepository $userBrawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+        }
+
+        $brawlers = $userBrawlerRepository->getBrawlers($user);
+
+        for ($i = 0; $i < count($brawlers); $i++) {
+            $brawlers[$i] = new BrawlerUserDetailsResponse();
+            $brawlers[$i]->setBrawlerId($brawlers[$i]['brawler_id']);
+            $brawlers[$i]->setName($brawlers[$i]['name']);
+            $brawlers[$i]->setImage($brawlers[$i]['image']);
+            $brawlers[$i]->setModelImage($brawlers[$i]['model_image']);
+        }
+
+        return new JsonResponse($brawlers, Response::HTTP_OK);
+    }
 }
