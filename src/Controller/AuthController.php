@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\DTO\user\CreateUserRequest;
+use App\Entity\Brawler;
 use App\Entity\Client;
+use App\Entity\GemTransaction;
 use App\Entity\User;
 use App\Enum\UserRole;
 use DateMalformedStringException;
@@ -63,6 +65,8 @@ final class AuthController extends AbstractController
     public function register(
         UserPasswordHasherInterface $passwordHasher,
         EntityManagerInterface $entityManager,
+        JWTTokenManagerInterface $JWTManager,
+        MailerInterface  $mailer,
         #[MapRequestPayload] CreateUserRequest $createUserRequest
     ): JsonResponse
     {
@@ -95,30 +99,30 @@ final class AuthController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'Error al generar tu Brawl Tag'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $defaultBrawler = $entityManager->getRepository(Brawler::class)->findOneBy(['id' => 16000000]);
+
+        if ($defaultBrawler === null) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Error al obtener el Brawler por defecto'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
         $user->setBrawlTag(strtoupper($tag));
         $user->setClient($client);
+        $user->setGems(200);
         $user->setRole(UserRole::USER);
+        $user->setBrawlerAvatar($defaultBrawler);
 
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return new JsonResponse(['status' => 'success'], Response::HTTP_CREATED);
-    }
+        $gemTransaction = new GemTransaction();
+        $gemTransaction->setGems(200);
+        $gemTransaction->setDate(new DateTime());
+        $gemTransaction->setUser($user);
 
-    #[Route('/generate-verify-email', name: 'app_auth_verify_email', methods: ['GET'])]
-    public function sendVerifyEmail(JWTTokenManagerInterface $JWTManager, MailerInterface  $mailer): JsonResponse {
+        $entityManager->persist($gemTransaction);
+        $entityManager->flush();
+
         try {
-            /** @var User $user */
-            $user = $this->getUser();
-
-            if ($user === null) {
-                return new JsonResponse(['status' => 'error', 'message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
-            }
-
-            if ($user->isEnabled()) {
-                return new JsonResponse(['status' => 'error', 'message' => 'El usuario ya ha sido verificado'], Response::HTTP_BAD_REQUEST);
-            }
-
             $payload = [
                 'username_id' => $user->getId(),
                 'exp' => (new DateTime())->modify('+1 day')->getTimestamp()
@@ -142,7 +146,7 @@ final class AuthController extends AbstractController
 
             $mailer->send($email);
 
-            return new JsonResponse(['status' => 'success'], Response::HTTP_OK);
+            return new JsonResponse(['status' => 'success'], Response::HTTP_CREATED);
         } catch (DateMalformedStringException $e) {
             return new JsonResponse(['status' => 'error', 'message' => 'Error al generar el token'], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (TransportExceptionInterface $e) {
