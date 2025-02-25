@@ -105,16 +105,17 @@ class BrawlerRepository extends ServiceEntityRepository
 
     public function getUserProbabilityBrawlersFromBox(int $box_id, int $user_id): array
     {
-        return $this->createQueryBuilder('b')
-            ->select('b.id', 'b.name', 'b.image', 'b.model_image', 'bb.probability', 'COALESCE(SUM(ub.quantity), 0) as user_quantity', 'r.id as rarity_id')
-            ->join(BoxBrawler::class, 'bb', 'WITH', 'bb.brawler = b.id')
-            ->leftJoin(UserBrawler::class, 'ub', 'WITH', 'ub.brawler = b.id')
-            ->join('b.rarity', 'r')
-            ->where('bb.box = :box_id and (ub.user = :user_id or ub.user is null)')
-            ->groupBy('b.id', 'bb.probability', 'r.id')
-            ->setParameter('box_id', $box_id)
-            ->setParameter('user_id', $user_id)
-            ->getQuery()
-            ->getResult();
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT b.id, b.name, b.image, b.model_image, bb.probability, COALESCE(SUM(ub.quantity), 0) as user_quantity, r.id as rarity_id
+                FROM box_brawler bb
+                JOIN brawler b ON bb.brawler_id = b.id
+                JOIN rarity r ON b.rarity_id = r.id
+                LEFT JOIN user_brawler ub ON ub.brawler_id = b.id and ub.user_id = :user_id
+                WHERE bb.box_id = :box_id
+                GROUP BY b.id, bb.probability, r.id';
+
+        $result = $conn->executeQuery($sql, ['box_id' => $box_id, 'user_id' => $user_id]);
+        return $result->fetchAllAssociative();
     }
 }
