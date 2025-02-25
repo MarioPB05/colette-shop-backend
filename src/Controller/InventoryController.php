@@ -25,7 +25,10 @@ final class InventoryController extends AbstractController
     #[Route('/{id}', name: 'get_inventory_box', methods: ['GET'])]
     public function getInventoryBox(int $id, InventoryRepository $inventoryRepository, TranslatorInterface $translator): JsonResponse
     {
-        $result = $inventoryRepository->getInventoryBox($id);
+        /* @var User $user */
+        $user = $this->getUser();
+
+        $result = $inventoryRepository->getInventoryBox($id, $user->getId());
 
         if ($result) {
             return $this->json(new InventoryBoxResponse(

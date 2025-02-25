@@ -26,13 +26,14 @@ class InventoryRepository extends ServiceEntityRepository
      * @param int $id
      * @return array
      */
-    public function getInventoryBox(int $id): array
+    public function getInventoryBox(int $id, int $user_id): array
     {
         return $this->createQueryBuilder('i')
             ->select('i.id', 'b.id as box_id', 'b.type', 'b.brawler_quantity', 'i.open')
             ->join('i.box', 'b')
-            ->where('i.id = :id')
+            ->where('i.id = :id and i.user = :user_id')
             ->setParameter('id', $id)
+            ->setParameter('user_id', $user_id)
             ->getQuery()
             ->getSingleResult();
     }
