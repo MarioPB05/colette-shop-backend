@@ -3,12 +3,14 @@
 namespace App\Controller;
 
 use App\DTO\box\InventoryBoxResponse;
+use App\Entity\User;
 use App\Repository\InventoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 #[Route('/api/inventory')]
 final class InventoryController extends AbstractController
@@ -37,5 +39,20 @@ final class InventoryController extends AbstractController
         }
 
         return $this->json(['message' => 'Box not found'], Response::HTTP_NOT_FOUND);
+    }
+
+    #[Route("/{id_item}/open", name: 'open_box', methods: ['POST'])]
+    public function saveBoxOpenResults(int $id_item, Request $data, InventoryRepository $inventoryRepository): JsonResponse
+    {
+        /* @var User $user */
+        $user = $this->getUser();
+
+        $data = json_decode($data->getContent(), false);
+
+        $result = $inventoryRepository->saveBoxOpenResults($id_item, $data, $user->getId());
+
+        return $this->json([
+            'message' => $result['message'],
+        ], $result['code']);
     }
 }
