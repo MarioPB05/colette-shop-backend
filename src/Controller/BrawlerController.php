@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\brawler\BrawlerProbabilityResponse;
+use App\DTO\brawler\InventoryBrawlerResponse;
 use App\DTO\brawler\UserBrawlerProbabilityResponse;
 use App\Entity\User;
 use App\Repository\BrawlerRepository;
@@ -65,6 +66,23 @@ final class BrawlerController extends AbstractController
             $result['probability'],
             $result['user_quantity'],
             $result['rarity_id']
+        ), $brawlers));
+    }
+
+    #[Route('/inventory/{item_id}', name: 'get_inventory_brawlers', methods: ['GET'])]
+    public function getInventoryBrawlers(int $item_id, BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $brawlers = $brawlerRepository->getInventoryBrawlers($user->getId(), $item_id);
+
+        return $this->json(array_map(fn($result) => new InventoryBrawlerResponse(
+            $result['id'],
+            $result['name'],
+            $result['image'],
+            $result['user_quantity_actual'],
+            $result['user_quantity_past']
         ), $brawlers));
     }
 }
