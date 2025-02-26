@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\brawler\BrawlerProbabilityResponse;
+use App\DTO\brawler\InventoryBrawlerResponse;
+use App\DTO\brawler\UserBrawlerProbabilityResponse;
 use App\Entity\User;
 use App\Repository\BrawlerRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -36,7 +39,50 @@ final class BrawlerController extends AbstractController
 
         $brawlers = $brawlerRepository->getBrawlersProbabilityFromBox($boxId, $user);
 
-        return $this->json($brawlers);
+        return $this->json(array_map(fn($result) => new BrawlerProbabilityResponse(
+            $result['id'],
+            $result['name'],
+            $result['image'],
+            $result['model_image'],
+            $result['probability'],
+            $result['user_quantity'],
+            $result['rarity_id']
+        ), $brawlers));
     }
 
+    #[Route('/box/{box_id}/user', name: 'get_user_probability_brawlers_from_box', methods: ['GET'])]
+    public function getUserProbabilityBrawlersFromBox(int $box_id, BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $brawlers = $brawlerRepository->getUserProbabilityBrawlersFromBox($box_id, $user->getId());
+
+        return $this->json(array_map(fn($result) => new UserBrawlerProbabilityResponse(
+            $result['id'],
+            $result['name'],
+            $result['image'],
+            $result['model_image'],
+            $result['probability'],
+            $result['user_quantity'],
+            $result['rarity_id']
+        ), $brawlers));
+    }
+
+    #[Route('/inventory/{item_id}', name: 'get_inventory_brawlers', methods: ['GET'])]
+    public function getInventoryBrawlers(int $item_id, BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $brawlers = $brawlerRepository->getInventoryBrawlers($user->getId(), $item_id);
+
+        return $this->json(array_map(fn($result) => new InventoryBrawlerResponse(
+            $result['id'],
+            $result['name'],
+            $result['image'],
+            $result['user_quantity_actual'],
+            $result['user_quantity_past']
+        ), $brawlers));
+    }
 }
