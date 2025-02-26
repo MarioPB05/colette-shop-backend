@@ -7,6 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class CreateUserRequest
 {
     #[Assert\NotBlank]
+    #[Assert\Length(max: 15)]
     public string $username;
 
     #[Assert\NotBlank]
@@ -18,9 +19,11 @@ class CreateUserRequest
     public string $password;
 
     #[Assert\NotBlank]
+    #[Assert\Length(max: 200)]
     public string $name;
 
     #[Assert\NotBlank]
+    #[Assert\Length(max: 400)]
     public string $surname;
 
     #[Assert\NotBlank]
