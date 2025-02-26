@@ -103,6 +103,14 @@ class BrawlerRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
+    /**
+     * It returns the brawlers that are in a box and the probability of getting them and the quantity that the user has
+     *
+     * @param int $boxId
+     * @param int $userId
+     * @return array
+     * @throws \Doctrine\DBAL\Exception
+     */
     public function getUserProbabilityBrawlersFromBox(int $box_id, int $user_id): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -116,6 +124,35 @@ class BrawlerRepository extends ServiceEntityRepository
                 GROUP BY b.id, bb.probability, r.id';
 
         $result = $conn->executeQuery($sql, ['box_id' => $box_id, 'user_id' => $user_id]);
+        return $result->fetchAllAssociative();
+    }
+
+    /**
+     * It returns the brawlers that the user has obtained in a box and the quantity that the user had in the past
+     *
+     * @param int $user_id
+     * @param int $item_id
+     * @return array
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function getInventoryBrawlers(int $user_id, int $item_id)
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT 
+            b.id, 
+            b.name, 
+            b.image, 
+            COALESCE(SUM(CASE WHEN i.id = :item_id THEN ub.quantity END), 0) AS user_quantity_actual,
+            COALESCE(SUM(CASE WHEN i.open_date < (SELECT i.open_date FROM inventory WHERE id = :item_id) THEN ub.quantity END), 0) AS user_quantity_past
+        FROM inventory i
+        LEFT JOIN user_brawler ub ON i.id = ub.inventory_id
+        JOIN brawler b ON ub.brawler_id = b.id
+        WHERE ub.user_id = :user_id
+        GROUP BY b.id, ub.id
+        ORDER BY ub.id';
+
+        $result = $conn->executeQuery($sql, ['user_id' => $user_id, 'item_id' => $item_id]);
         return $result->fetchAllAssociative();
     }
 }
