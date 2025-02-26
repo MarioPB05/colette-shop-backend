@@ -149,8 +149,7 @@ class BrawlerRepository extends ServiceEntityRepository
         LEFT JOIN user_brawler ub ON i.id = ub.inventory_id
         JOIN brawler b ON ub.brawler_id = b.id
         WHERE ub.user_id = :user_id
-        GROUP BY b.id, ub.id
-        ORDER BY ub.id';
+        GROUP BY b.id';
 
         $result = $conn->executeQuery($sql, ['user_id' => $user_id, 'item_id' => $item_id]);
         return $result->fetchAllAssociative();
