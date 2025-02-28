@@ -27,11 +27,17 @@ class UserBrawlerRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $sql = "
-            select ub.brawler_id, b.name, b.image, b.model_image
-                from user_brawler ub
-                left join public.brawler b on b.id = ub.brawler_id
-                where ub.user_id = :userId;";
+
+        $sql = "select 
+                b.id,
+                b.image,
+                b.pin_image as pin_image,
+                b.model_image as model_image,
+                b.portrait_image as portrait_image,
+                b.name
+            from user_brawler ub
+            join brawler b on ub.brawler_id = b.id
+            where ub.user_id = :userId;";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
 
