@@ -2,6 +2,8 @@
 
 namespace App\DTO\user;
 
+use App\DTO\brawler\UserBrawler;
+
 class UserDetailsResponse
 {
     public int $id;
@@ -18,7 +20,7 @@ class UserDetailsResponse
     public int $favouriteBrawlers;
     public int $brawlers; // the number of brawlers that the user has
     public int $gifts; // the number of gifts that the user sends
-    public int $brawlerAvatar;
+    public UserBrawler $brawlerAvatar;
 
     public function __construct()
     {
@@ -97,5 +99,10 @@ class UserDetailsResponse
     public function setBrawlerAvatar(string $brawlerAvatar): void
     {
         $this->brawlerAvatar = $brawlerAvatar;
+    }
+
+    public function setBrawlerAvatarImage($brawleravatar_image): void
+    {
+        $this->brawlerAvatarImage = $brawleravatar_image;
     }
 }
