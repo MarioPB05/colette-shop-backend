@@ -154,4 +154,53 @@ class BrawlerRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql, ['user_id' => $user_id, 'item_id' => $item_id]);
         return $result->fetchAllAssociative();
     }
+
+    /**
+     * It returns all the brawlers with the quantity that the user has and if it is a favorite brawler
+     *
+     * @param int $user_id
+     * @return array
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function getBrawlerCards(int $user_id): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.model_image, r.id as rarity_id, r.color as rarity_color,
+                    (
+                        SELECT COUNT(u.user_id)
+                        FROM user_brawler u
+                        WHERE u.brawler_id = b.id AND u.user_id = :user_id
+                    ) AS user_quantity,
+                    (
+                        SELECT COUNT(u.user_id)
+                        FROM user_favorite_brawlers u
+                        WHERE u.brawler_id = b.id AND u.user_id = :user_id
+                    ) AS user_favorite
+                FROM brawler AS b
+                JOIN rarity AS r ON b.rarity_id = r.id';
+
+        $result = $conn->executeQuery($sql, ['user_id' => $user_id]);
+
+        return $result->fetchAllAssociative();
+    }
+
+    /**
+     * It sets the favorite brawler of a user
+     *
+     * @param int $brawlerId
+     * @param User $user
+     * @param bool $favorite
+     * @return void
+     */
+    public function setUserBrawlerFavoriteTo(int $user_id, int $brawlerId, bool $favorite): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'INSERT INTO user_favorite_brawlers (user_id, brawler_id) VALUES (:user_id, :brawler_id)';
+
+        if (!$favorite) {
+            $sql = 'DELETE FROM user_favorite_brawlers WHERE user_id = :user_id AND brawler_id = :brawler_id';
+        }
+
+        $conn->executeQuery($sql, ['user_id' => $user_id, 'brawler_id' => $brawlerId]);
+    }
 }
