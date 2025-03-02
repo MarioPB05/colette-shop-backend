@@ -115,6 +115,12 @@ class InventoryRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
+    /**
+     * Returns the details of the inventory for the given order
+     * @param int $order_id
+     * @return \mixed[][]
+     * @throws \Doctrine\DBAL\Exception
+     */
     public function getInventoryForOrderDetails(int $order_id)
     {
         $conn = $this->getEntityManager()->getConnection();
