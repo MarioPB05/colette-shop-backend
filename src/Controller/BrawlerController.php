@@ -8,6 +8,7 @@ use App\DTO\brawler\InventoryBrawlerResponse;
 use App\DTO\brawler\UserBrawlerProbabilityResponse;
 use App\Entity\User;
 use App\Repository\BrawlerRepository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -104,5 +105,17 @@ final class BrawlerController extends AbstractController
             $result['user_quantity'],
             $result['user_favorite']
         ), $brawlers));
+    }
+
+    #[Route('/{brawlerId}/favorite', name: 'update_brawler_favorite', methods: ['PUT'])]
+    public function updateUserFavoriteCollection(int $brawlerId, BrawlerRepository $brawlerRepository, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $favorite = json_decode($request->getContent(), true)['favorite'];
+        $brawlerRepository->setUserBrawlerFavoriteTo($user->getId(), $brawlerId, $favorite);
+
+        return $this->json(['message' => 'Brwaler favorite updated']);
     }
 }
