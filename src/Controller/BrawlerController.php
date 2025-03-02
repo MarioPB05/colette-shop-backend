@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\brawler\BrawlerCardResponse;
 use App\DTO\brawler\BrawlerProbabilityResponse;
 use App\DTO\brawler\InventoryBrawlerResponse;
 use App\DTO\brawler\UserBrawlerProbabilityResponse;
@@ -83,6 +84,25 @@ final class BrawlerController extends AbstractController
             $result['image'],
             $result['user_quantity_actual'],
             $result['user_quantity_past']
+        ), $brawlers));
+    }
+
+    #[Route('/user/collection', name: 'get_user_collection', methods: ['GET'])]
+    public function getUserCollection(BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $brawlers = $brawlerRepository->getBrawlerCards($user->getId());
+
+        return $this->json(array_map(fn($result) => new BrawlerCardResponse(
+            $result['id'],
+            $result['name'],
+            $result['model_image'],
+            $result['rarity_id'],
+            $result['rarity_color'],
+            $result['user_quantity'],
+            $result['user_favorite']
         ), $brawlers));
     }
 }
