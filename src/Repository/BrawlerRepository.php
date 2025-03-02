@@ -139,12 +139,12 @@ class BrawlerRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $sql = 'SELECT 
-            b.id, 
-            b.name, 
+        $sql = 'SELECT
+            b.id,
+            b.name,
             b.image, 
             COALESCE(SUM(CASE WHEN i.id = :item_id THEN ub.quantity END), 0) AS user_quantity_actual,
-            COALESCE(SUM(CASE WHEN i.open_date < (SELECT i.open_date FROM inventory WHERE id = :item_id) THEN ub.quantity END), 0) AS user_quantity_past
+            COALESCE(SUM(CASE WHEN i.id != :item_id THEN ub.quantity END), 0) AS user_quantity_past
         FROM inventory i
         LEFT JOIN user_brawler ub ON i.id = ub.inventory_id
         JOIN brawler b ON ub.brawler_id = b.id
@@ -167,7 +167,7 @@ class BrawlerRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
         $sql = 'SELECT b.id, b.name, b.model_image, r.id as rarity_id, r.color as rarity_color,
                     (
-                        SELECT COUNT(u.user_id)
+                        SELECT COALESCE(SUM(u.quantity), 0)
                         FROM user_brawler u
                         WHERE u.brawler_id = b.id AND u.user_id = :user_id
                     ) AS user_quantity,
