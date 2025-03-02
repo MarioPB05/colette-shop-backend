@@ -88,7 +88,7 @@ class BrawlerRepository extends ServiceEntityRepository
      * @return array
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getBrawlersProbabilityFromBox(int $boxId, User $user): array
+    public function getBrawlersProbabilityFromBox(int $boxId, int $idUser): array
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = 'SELECT b.id, b.name, b.image, b.rarity_id, r.name as rarity, bb.probability, NOT ufb.brawler_id IS NULL as user_favorite
@@ -98,7 +98,7 @@ class BrawlerRepository extends ServiceEntityRepository
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
                 WHERE bb.box_id = :boxId';
 
-        $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $user->getId()]);
+        $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $idUser]);
 
         return $result->fetchAllAssociative();
     }
