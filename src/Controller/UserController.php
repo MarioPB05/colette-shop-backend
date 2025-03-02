@@ -191,7 +191,7 @@ final class UserController extends AbstractController{
         $user = $this->getUser();
 
         if (!$user) {
-            return new JsonResponse(['message' => 'User not found'], Response::HTTP_OK);
+            return new JsonResponse(['message' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }
 
         $brawler = $brawlerRepository->find($idBrawler);
