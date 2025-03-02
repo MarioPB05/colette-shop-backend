@@ -183,4 +183,24 @@ class BrawlerRepository extends ServiceEntityRepository
 
         return $result->fetchAllAssociative();
     }
+
+    /**
+     * It sets the favorite brawler of a user
+     *
+     * @param int $brawlerId
+     * @param User $user
+     * @param bool $favorite
+     * @return void
+     */
+    public function setUserBrawlerFavoriteTo(int $user_id, int $brawlerId, bool $favorite): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'INSERT INTO user_favorite_brawlers (user_id, brawler_id) VALUES (:user_id, :brawler_id)';
+
+        if (!$favorite) {
+            $sql = 'DELETE FROM user_favorite_brawlers WHERE user_id = :user_id AND brawler_id = :brawler_id';
+        }
+
+        $conn->executeQuery($sql, ['user_id' => $user_id, 'brawler_id' => $brawlerId]);
+    }
 }
