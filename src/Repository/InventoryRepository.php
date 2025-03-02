@@ -193,7 +193,7 @@ class InventoryRepository extends ServiceEntityRepository
         $brawler_query = "INSERT INTO user_brawler (quantity, brawler_id, user_id, inventory_id)
                 VALUES (:quantity, :brawler_id, :user_id, :inventory_id)";
 
-        $inventory_query = "UPDATE inventory SET open = true WHERE id = :id_item";
+        $inventory_query = "UPDATE inventory SET open = true, open_date = now() WHERE id = :id_item";
 
         $brawler_stmt = $conn->prepare($brawler_query);
         $inventory_stmt = $conn->prepare($inventory_query);
