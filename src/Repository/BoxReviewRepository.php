@@ -34,4 +34,39 @@ class BoxReviewRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql, ['boxId' => $boxId]);
         return $result->fetchAllAssociative();
     }
+
+    /**
+     * It returns if a user has reviewed a box
+     *
+     * @param int $boxId
+     * @param int $userId
+     * @return bool
+     */
+    public function userHasReviewedBox(int $boxId, int $userId): bool
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT COUNT(*) as count
+                FROM box_review
+                WHERE box_id = :boxId AND user_id = :userId";
+
+        $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $userId]);
+        return $result->fetchOne() > 0;
+    }
+
+    /**
+     * It adds a review to a box
+     *
+     * @param int $boxId
+     * @param int $userId
+     * @param int $rating
+     * @param string $comment
+     */
+    public function addBoxReview(int $boxId, int $userId, int $rating, string $comment): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "INSERT INTO box_review (box_id, user_id, rating, comment, post_date)
+                VALUES (:boxId, :userId, :rating, :comment, NOW())";
+
+        $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $userId, 'rating' => $rating, 'comment' => $comment]);
+    }
 }
