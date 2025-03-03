@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\box\BoxInventoryDetailsResponse;
 use App\DTO\box\InventoryBoxResponse;
 use App\Entity\User;
 use App\Repository\InventoryRepository;
@@ -57,5 +58,32 @@ final class InventoryController extends AbstractController
         return $this->json([
             'message' => $result['message'],
         ], $result['code']);
+    }
+
+    #[Route("/user/inventory", name: 'user_inventory', methods: ['GET'])]
+    public function getUserInventory(InventoryRepository $inventoryRepository): JsonResponse
+    {
+        /* @var User $user */
+        $user = $this->getUser();
+
+        $result = $inventoryRepository->getInventoryForUser($user);
+
+        $inventoryRequests = [];
+        foreach ($result as $inventory) {
+            $inventoryRequest = new BoxInventoryDetailsResponse();
+            $inventoryRequest->setInventoryId($inventory['inventory_id']);
+            $inventoryRequest->setOpen($inventory['open']);
+            $inventoryRequest->setCollectDate($inventory['collect_date']);
+            $inventoryRequest->setOpenDate($inventory['open_date']);
+            $inventoryRequest->setBoxId($inventory['box_id']);
+            $inventoryRequest->setBoxName($inventory['box_name']);
+            $inventoryRequest->setTotalBrawlers($inventory['total_brawlers']);
+            $inventoryRequest->setNewBrawlersObtained($inventory['new_brawlers_obtained']);
+            $inventoryRequest->setTotalTrophies($inventory['total_trophies']);
+            $inventoryRequest->setGiftFrom($inventory['gift_from']);
+            $inventoryRequests[] = $inventoryRequest;
+        }
+
+        return $this->json($inventoryRequests);
     }
 }
