@@ -29,7 +29,7 @@ class BoxRepository extends ServiceEntityRepository
     public function getAllBoxesShop(User $user): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, count(ufb.brawler_id) as favorite_brawlers_in_box, b.pinned, (COUNT(i.id) > 100) AS popular
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, count(distinct ufb.brawler_id) as favorite_brawlers_in_box, b.pinned, (COUNT(i.id) > 100) AS popular
                 FROM box b
                 LEFT JOIN box_brawler bb on b.id = bb.box_id
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
