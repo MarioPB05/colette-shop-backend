@@ -6,6 +6,7 @@ use App\Entity\Order;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  *
@@ -143,6 +144,9 @@ class OrderRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
 
         return $result->fetchAllAssociative();
+    }
 
+    public function generateInvoiceNumber(): string {
+        return strtoupper(substr(Uuid::v7()->toBase32(), 0, 20));
     }
 }
