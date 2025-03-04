@@ -119,7 +119,7 @@ final class BoxController extends AbstractController
         );
 
         try {
-            $boxRepository->createBox($createBoxRequest);
+            $boxRepository->createBoxBase($createBoxRequest, false);
         }catch (\Exception $e){
             return $this->json(['status' => 'error', 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -142,7 +142,7 @@ final class BoxController extends AbstractController
         );
 
         try {
-            $boxRepository->createDailyBox($createBoxRequest);
+            $boxRepository->createBoxBase($createBoxRequest, true);
         } catch (\Exception $e) {
             return $this->json(['status' => 'error', 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -181,5 +181,50 @@ final class BoxController extends AbstractController
             $boxDetails['brawler_quantity'],
             $brawlers
         ));
+    }
+
+    #[Route('/{id}', name: 'box_update', methods: ['PUT'])]
+    public function update(int $id, BoxRepository $boxRepository, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $createBoxRequest = new CreateBoxRequest(
+            $data['name'],
+            $data['price'],
+            $data['type'],
+            $data['quantity'],
+            $data['brawler_quantity'],
+            $data['brawlers_in_box']
+        );
+
+        try {
+            $boxRepository->editBoxBase($id, $createBoxRequest, false);
+        } catch (\Exception $e) {
+            return $this->json(['status' => 'error', 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json(['status' => 'success', 'message' => 'Box updated'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/daily/{id}', name: 'box_update_daily', methods: ['PUT'])]
+    public function updateDaily(int $id, BoxRepository $boxRepository, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $createBoxRequest = new CreateDailyBoxRequest(
+            $data['name'],
+            $data['type'],
+            $data['repeat_every_hours'],
+            $data['brawler_quantity'],
+            $data['brawlers_in_box']
+        );
+
+        try {
+            $boxRepository->editBoxBase($id, $createBoxRequest, true);
+        } catch (\Exception $e) {
+            return $this->json(['status' => 'error', 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json(['status' => 'success', 'message' => 'Box updated'], Response::HTTP_CREATED);
     }
 }
