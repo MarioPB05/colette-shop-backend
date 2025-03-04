@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Inventory;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -193,7 +194,7 @@ class InventoryRepository extends ServiceEntityRepository
         $brawler_query = "INSERT INTO user_brawler (quantity, brawler_id, user_id, inventory_id)
                 VALUES (:quantity, :brawler_id, :user_id, :inventory_id)";
 
-        $inventory_query = "UPDATE inventory SET open = true WHERE id = :id_item";
+        $inventory_query = "UPDATE inventory SET open = true, open_date = now() WHERE id = :id_item";
 
         $brawler_stmt = $conn->prepare($brawler_query);
         $inventory_stmt = $conn->prepare($inventory_query);
@@ -225,5 +226,47 @@ class InventoryRepository extends ServiceEntityRepository
             'message' => 'Data saved',
             'code' => 200
         ];
+    }
+
+    /**
+     * Returns the details of the inventory for the given user
+     * @return array[]|array
+     */
+    public function getInventoryForUser(User $user): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "select
+                    i.id as inventory_id,
+                    i.collect_date as collect_date,
+                    i.open as open,
+                    coalesce(i.open_date::text, '') as open_date,
+                    b.id as box_id,
+                    b.name as box_name,
+                    b.brawler_quantity as total_brawlers,
+                    coalesce(sum(case
+                                     when ub.brawler_id not in (
+                                         select distinct brawler_id
+                                         from user_brawler
+                                         where user_id = i.user_id and inventory_id != i.id
+                                     ) then 1
+                                     else 0
+                        end), 0) as new_brawlers_obtained,
+                    coalesce(sum(ub.quantity), 0) as total_trophies,
+                    case
+                        when o.user_id != i.user_id then u_sender.username
+                        else null
+                        end as gift_from
+                from inventory i
+                         join box b on i.box_id = b.id
+                         left join user_brawler ub on i.id = ub.inventory_id
+                         left join \"order\" o on i.order_id = o.id
+                         left join \"user\" u_sender on o.user_id = u_sender.id
+                where i.user_id = :userId
+                group by i.id, b.name, b.brawler_quantity, o.user_id, u_sender.username, b.id";
+
+        $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
+
+        return $result->fetchAllAssociative();
     }
 }

@@ -2,11 +2,13 @@
 
 namespace App\Controller;
 
+use App\DTO\brawler\BrawlerCardResponse;
 use App\DTO\brawler\BrawlerProbabilityResponse;
 use App\DTO\brawler\InventoryBrawlerResponse;
 use App\DTO\brawler\UserBrawlerProbabilityResponse;
 use App\Entity\User;
 use App\Repository\BrawlerRepository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -37,16 +39,16 @@ final class BrawlerController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $brawlers = $brawlerRepository->getBrawlersProbabilityFromBox($boxId, $user);
+        $brawlers = $brawlerRepository->getBrawlersProbabilityFromBox($boxId, $user->getId());
 
         return $this->json(array_map(fn($result) => new BrawlerProbabilityResponse(
             $result['id'],
             $result['name'],
             $result['image'],
-            $result['model_image'],
+            $result['rarity_id'],
+            $result['rarity'],
+            $result['user_favorite'],
             $result['probability'],
-            $result['user_quantity'],
-            $result['rarity_id']
         ), $brawlers));
     }
 
@@ -84,5 +86,36 @@ final class BrawlerController extends AbstractController
             $result['user_quantity_actual'],
             $result['user_quantity_past']
         ), $brawlers));
+    }
+
+    #[Route('/user/collection', name: 'get_user_collection', methods: ['GET'])]
+    public function getUserCollection(BrawlerRepository $brawlerRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $brawlers = $brawlerRepository->getBrawlerCards($user->getId());
+
+        return $this->json(array_map(fn($result) => new BrawlerCardResponse(
+            $result['id'],
+            $result['name'],
+            $result['model_image'],
+            $result['rarity_id'],
+            $result['rarity_color'],
+            $result['user_quantity'],
+            $result['user_favorite']
+        ), $brawlers));
+    }
+
+    #[Route('/{brawlerId}/favorite', name: 'update_brawler_favorite', methods: ['PUT'])]
+    public function updateUserFavoriteCollection(int $brawlerId, BrawlerRepository $brawlerRepository, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $favorite = json_decode($request->getContent(), true)['favorite'];
+        $brawlerRepository->setUserBrawlerFavoriteTo($user->getId(), $brawlerId, $favorite);
+
+        return $this->json(['message' => 'Brwaler favorite updated']);
     }
 }

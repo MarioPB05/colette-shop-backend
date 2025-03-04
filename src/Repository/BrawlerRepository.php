@@ -88,7 +88,7 @@ class BrawlerRepository extends ServiceEntityRepository
      * @return array
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getBrawlersProbabilityFromBox(int $boxId, User $user): array
+    public function getBrawlersProbabilityFromBox(int $boxId, int $idUser): array
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = 'SELECT b.id, b.name, b.image, b.rarity_id, r.name as rarity, bb.probability, NOT ufb.brawler_id IS NULL as user_favorite
@@ -98,7 +98,7 @@ class BrawlerRepository extends ServiceEntityRepository
                 LEFT JOIN user_favorite_brawlers ufb on bb.brawler_id = ufb.brawler_id and ufb.user_id = :userId
                 WHERE bb.box_id = :boxId';
 
-        $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $user->getId()]);
+        $result = $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $idUser]);
 
         return $result->fetchAllAssociative();
     }
@@ -139,12 +139,12 @@ class BrawlerRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $sql = 'SELECT 
-            b.id, 
-            b.name, 
+        $sql = 'SELECT
+            b.id,
+            b.name,
             b.image, 
             COALESCE(SUM(CASE WHEN i.id = :item_id THEN ub.quantity END), 0) AS user_quantity_actual,
-            COALESCE(SUM(CASE WHEN i.open_date < (SELECT i.open_date FROM inventory WHERE id = :item_id) THEN ub.quantity END), 0) AS user_quantity_past
+            COALESCE(SUM(CASE WHEN i.id != :item_id THEN ub.quantity END), 0) AS user_quantity_past
         FROM inventory i
         LEFT JOIN user_brawler ub ON i.id = ub.inventory_id
         JOIN brawler b ON ub.brawler_id = b.id
@@ -153,5 +153,54 @@ class BrawlerRepository extends ServiceEntityRepository
 
         $result = $conn->executeQuery($sql, ['user_id' => $user_id, 'item_id' => $item_id]);
         return $result->fetchAllAssociative();
+    }
+
+    /**
+     * It returns all the brawlers with the quantity that the user has and if it is a favorite brawler
+     *
+     * @param int $user_id
+     * @return array
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function getBrawlerCards(int $user_id): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.model_image, r.id as rarity_id, r.color as rarity_color,
+                    (
+                        SELECT COALESCE(SUM(u.quantity), 0)
+                        FROM user_brawler u
+                        WHERE u.brawler_id = b.id AND u.user_id = :user_id
+                    ) AS user_quantity,
+                    (
+                        SELECT COUNT(u.user_id)
+                        FROM user_favorite_brawlers u
+                        WHERE u.brawler_id = b.id AND u.user_id = :user_id
+                    ) AS user_favorite
+                FROM brawler AS b
+                JOIN rarity AS r ON b.rarity_id = r.id';
+
+        $result = $conn->executeQuery($sql, ['user_id' => $user_id]);
+
+        return $result->fetchAllAssociative();
+    }
+
+    /**
+     * It sets the favorite brawler of a user
+     *
+     * @param int $brawlerId
+     * @param User $user
+     * @param bool $favorite
+     * @return void
+     */
+    public function setUserBrawlerFavoriteTo(int $user_id, int $brawlerId, bool $favorite): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'INSERT INTO user_favorite_brawlers (user_id, brawler_id) VALUES (:user_id, :brawler_id)';
+
+        if (!$favorite) {
+            $sql = 'DELETE FROM user_favorite_brawlers WHERE user_id = :user_id AND brawler_id = :brawler_id';
+        }
+
+        $conn->executeQuery($sql, ['user_id' => $user_id, 'brawler_id' => $brawlerId]);
     }
 }
