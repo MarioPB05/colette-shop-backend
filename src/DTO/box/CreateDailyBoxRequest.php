@@ -13,7 +13,7 @@ class CreateDailyBoxRequest
     public function __construct(string $name, int $type, int $repeat_every_hours, int $brawler_quantity, array $brawlers_in_box)
     {
         $this->name = $name;
-        $this->type = $type + 1;
+        $this->type = $type;
         $this->repeat_every_hours = $repeat_every_hours;
         $this->brawler_quantity = $brawler_quantity;
         $this->brawlers_in_box = $brawlers_in_box;

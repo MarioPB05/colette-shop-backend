@@ -18,7 +18,7 @@ class CreateBoxRequest
     {
         $this->name = $name;
         $this->price = $price;
-        $this->type = $type + 1;
+        $this->type = $type;
         $this->quantity = $quantity;
         $this->brawler_quantity = $brawler_quantity;
         $this->brawlers_in_box = $brawlers_in_box;
