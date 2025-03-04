@@ -89,11 +89,11 @@ final class AuthController extends AbstractController
         $user->setPassword($passwordHasher->hashPassword($user, $createUserRequest->password));
 
         try {
-            $tag = substr(bin2hex(random_bytes(8)), 0, 8);
+            $tag = substr(bin2hex(random_bytes(9)), 0, 9);
 
             // Check if tag is already in use
             while ($entityManager->getRepository(User::class)->findOneBy(['brawl_tag' => $tag])) {
-                $tag = substr(bin2hex(random_bytes(8)), 0, 8);
+                $tag = substr(bin2hex(random_bytes(9)), 0, 9);
             }
         } catch (RandomException $e) {
             return new JsonResponse(['status' => 'error', 'message' => 'Error al generar tu Brawl Tag'], Response::HTTP_INTERNAL_SERVER_ERROR);

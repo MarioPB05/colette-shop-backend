@@ -6,6 +6,7 @@ use App\Entity\Order;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  *
@@ -57,8 +58,10 @@ class OrderRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
-    public function getOrderDetails(int $orderId): array
+    public function getOrderDetails(int $orderId, bool $excludeCancelled = true): array
     {
+        $where = $excludeCancelled ? 'AND o.cancelled IS FALSE' : '';
+
         $conn = $this->getEntityManager()->getConnection();
         $sql = "select
                     o.invoice_number,
@@ -85,8 +88,7 @@ class OrderRepository extends ServiceEntityRepository
                         when i.user_id != o.user_id then c2.dni
                         end as to_dni,
                     coalesce(od.discount, 0) as discount,
-                    sum(i.price) as sub_total,
-                    sum(i.price) - coalesce(od.discount, 0) as total,
+                    sum(i.price) as total,
                     u.gems,
                     b.image as user_image
                 from \"order\" o
@@ -97,7 +99,7 @@ class OrderRepository extends ServiceEntityRepository
                          left join \"user\" u2 on i.user_id = u2.id
                          left join client c2 on u2.client_id = c2.id
                          left join brawler b on u.brawler_avatar = b.id
-                where o.cancelled is false and o.id = :orderId
+                where o.id = :orderId $where
                 group by o.id, o.invoice_number, i.user_id, o.purchase_date, o.state, u.id, u.username, c.name, c.surname, c.dni, u2.id, u2.username, c2.name, c2.surname, c2.dni, od.discount, u.gems, b.image";
 
         $result = $conn->executeQuery($sql, ['orderId' => $orderId]);
@@ -143,6 +145,9 @@ class OrderRepository extends ServiceEntityRepository
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
 
         return $result->fetchAllAssociative();
+    }
 
+    public function generateInvoiceNumber(): string {
+        return strtoupper(substr(Uuid::v7()->toBase32(), 0, 10));
     }
 }

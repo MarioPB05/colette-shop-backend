@@ -12,6 +12,7 @@ use App\Entity\Brawler;
 use App\Entity\User;
 use App\Enum\BoxType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -86,11 +87,16 @@ class BoxRepository extends ServiceEntityRepository
      */
     public function getAllBoxes(): array
     {
-        return $this->createQueryBuilder('b')
-            ->select('b.id', 'b.name', 'b.price', 'b.quantity', 'b.type', 'b.pinned')
-            ->where('b.deleted = FALSE')
-            ->getQuery()
-            ->getResult();
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT b.id, b.name, b.price, b.quantity, b.type, b.pinned, NOT bd.box_id IS NULL as is_daily
+                FROM box b
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                WHERE b.deleted = FALSE
+                GROUP BY b.id, bd.box_id';
+
+        $result = $conn->executeQuery($sql);
+        return $result->fetchAllAssociative();
     }
 
     /**
@@ -110,7 +116,6 @@ class BoxRepository extends ServiceEntityRepository
                 GROUP BY b.id, bd.box_id';
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
-
 
     /**
      * Handles the base logic for creating a box.
@@ -328,4 +333,17 @@ class BoxRepository extends ServiceEntityRepository
                 WHERE bb.box_id = :boxId';
         $conn->executeQuery($sql, ['boxId' => $box->getId()]);
     }
+
+    public function getAllBoxDetails(array $boxesIds): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(i.id) > 0) AS claimed, b.deleted
+                FROM box b
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours
+                WHERE b.deleted = FALSE and b.id IN (:boxesIds)
+                GROUP BY b.id, bd.box_id';
+        return $conn->executeQuery($sql, ['boxesIds' => $boxesIds], ['boxesIds' => ArrayParameterType::INTEGER])->fetchAllAssociative();
+    }
+
 }
