@@ -147,6 +147,6 @@ class OrderRepository extends ServiceEntityRepository
     }
 
     public function generateInvoiceNumber(): string {
-        return strtoupper(substr(Uuid::v7()->toBase32(), 0, 20));
+        return strtoupper(substr(Uuid::v7()->toBase32(), 0, 10));
     }
 }
