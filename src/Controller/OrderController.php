@@ -58,7 +58,6 @@ class OrderController extends AbstractController
         $inventory = $inventoryRepository->getInventoryForOrderDetails($orderId);
 
             $ordersResponse = new OrderDetailsResponse();
-
             $order = $orderDetails;
             $orderResponseFrom = new OrderParticipantResponse();
             $orderResponseFrom->setUsername($order['from_username']);
@@ -69,7 +68,7 @@ class OrderController extends AbstractController
 
             $orderResponseTo = new OrderParticipantResponse();
 
-            if ($order['to_id'] !== null) {
+            if ($order['to_id'] !== $order['from_id']) {
                 $orderResponseTo->setUsername($order['to_username']);
                 $orderResponseTo->setName($order['to_name']);
                 $orderResponseTo->setSurname($order['to_surname']);
