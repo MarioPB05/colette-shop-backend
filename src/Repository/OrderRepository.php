@@ -86,13 +86,13 @@ class OrderRepository extends ServiceEntityRepository
                     b.type AS box_type,
                     COUNT(i.id) AS quantity,  -- Cantidad de cajas compradas
                     i.price AS unit_price,
-                    COUNT(i.id) * i.price AS total_price,  -- Precio total por tipo de caja
+                    COUNT(i.id) * i.price AS total,  -- Precio total por tipo de caja
                 
                     -- Descuento aplicado
                     COALESCE(od.discount, 0) AS discount,
                 
                     -- Transacciones de gemas
-                    COALESCE(ABS(gt.gems), 0) AS gems_used
+                    COALESCE(ABS(gt.gems), 0) AS gems
                 
                 FROM \"order\" o
                          -- Descuentos y transacciones de gemas
