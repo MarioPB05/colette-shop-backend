@@ -111,79 +111,69 @@ class BoxRepository extends ServiceEntityRepository
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
 
+
     /**
-     * It creates a new box
+     * Handles the base logic for creating a box.
      *
-     * @param CreateBoxRequest $createBoxRequest
+     * @param CreateBoxRequest|CreateDailyBoxRequest $request
+     * @param bool $isDailyBox
      * @return void
+     * @throws \Exception
      */
-    public function createBox(CreateBoxRequest $createBoxRequest): void
+    public function createBoxBase(object $request, bool $isDailyBox): void
     {
         $this->getEntityManager()->beginTransaction();
 
         try {
             $box = new Box();
-            $box->setName($createBoxRequest->name);
-            $box->setPrice($createBoxRequest->price);
-            $box->setType(BoxType::tryFrom($createBoxRequest->type));
-            $box->setQuantity($createBoxRequest->quantity);
-            $box->setBrawlerQuantity($createBoxRequest->brawler_quantity);
+            $box->setName($request->name);
+            $box->setType(BoxType::tryFrom($request->type));
+            $box->setBrawlerQuantity($request->brawler_quantity);
+
+            if ($isDailyBox) {
+                $box->setQuantity(-1);
+                $box->setPrice(0); // Daily boxes are free
+            } else {
+                $box->setQuantity($request->quantity);
+                $box->setPrice($request->price);
+            }
+
             $this->getEntityManager()->persist($box);
 
-            foreach ($createBoxRequest->brawlers_in_box as $brawler) {
-                $boxBrawler = new BoxBrawler();
-                $boxBrawler->setBrawler($this->getEntityManager()->getReference(Brawler::class, $brawler['id']));
-                $boxBrawler->setProbability($brawler['probability']);
-                $boxBrawler->setBox($box);
-                $this->getEntityManager()->persist($boxBrawler);
+            if ($isDailyBox) {
+                $boxDaily = new BoxDaily();
+                $boxDaily->setBox($box);
+                $boxDaily->setRepeatEveryHours($request->repeat_every_hours);
+                $this->getEntityManager()->persist($boxDaily);
             }
+
+            $this->addBrawlersToBox($box, $request->brawlers_in_box);
 
             $this->getEntityManager()->flush();
             $this->getEntityManager()->commit();
 
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->getEntityManager()->rollback();
             throw $e;
         }
     }
 
     /**
-     * It creates a new daily box
+     * Adds brawlers to a box with their probabilities.
      *
-     * @param CreateDailyBoxRequest $createDailyBoxRequest
+     * @param Box $box
+     * @param array $brawlers
      * @return void
      */
-    public function createDailyBox(CreateDailyBoxRequest $createDailyBoxRequest) : void
+    private function addBrawlersToBox(Box $box, array $brawlers): void
     {
-        $this->getEntityManager()->beginTransaction();
-
-        try {
-            $box = new Box();
-            $box->setName($createDailyBoxRequest->name);
-            $box->setQuantity(-1);
-            $box->setBrawlerQuantity($createDailyBoxRequest->brawler_quantity);
-            $box->setPrice(0); // Daily boxes are free
-            $box->setType(BoxType::tryFrom($createDailyBoxRequest->type));
-            $this->getEntityManager()->persist($box);
-
-            $boxDaily = new BoxDaily();
-            $boxDaily->setBox($box);
-            $boxDaily->setRepeatEveryHours($createDailyBoxRequest->repeat_every_hours);
-            $this->getEntityManager()->persist($boxDaily);
-
-            foreach ($createDailyBoxRequest->brawlers_in_box as $brawler) {
-                $boxBrawler = new BoxBrawler();
-                $boxBrawler->setBrawler($this->getEntityManager()->getReference(Brawler::class, $brawler['id']));
-                $boxBrawler->setProbability($brawler['probability']);
-                $boxBrawler->setBox($box);
-                $this->getEntityManager()->persist($boxBrawler);
-            }
-
-            $this->getEntityManager()->flush();
-            $this->getEntityManager()->commit();
-        }catch (\Exception $e) {
-            $this->getEntityManager()->rollback();
-            throw $e;
+        foreach ($brawlers as $brawlerData) {
+            $brawler = $this->getEntityManager()->getReference(Brawler::class, $brawlerData['id']);
+            $boxBrawler = new BoxBrawler();
+            $boxBrawler->setBrawler($brawler);
+            $boxBrawler->setProbability($brawlerData['probability']);
+            $boxBrawler->setBox($box);
+            $this->getEntityManager()->persist($boxBrawler);
         }
     }
 
@@ -253,5 +243,89 @@ class BoxRepository extends ServiceEntityRepository
                 FROM box_brawler bb
                 WHERE bb.box_id = :boxId';
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAllAssociative();
+    }
+
+    /**
+     * Edits a normal box or a daily box
+     *
+     * @param object $request
+     * @param bool $isDailyBox
+     * @return void
+     */
+    public function editBoxBase(int $boxId, object $request, bool $isDailyBox): void
+    {
+        $this->getEntityManager()->beginTransaction();
+
+        try {
+            $box = $this->find($boxId);
+            $box->setName($request->name);
+            $box->setType(BoxType::tryFrom($request->type));
+            $box->setBrawlerQuantity($request->brawler_quantity);
+
+            if ($isDailyBox) {
+                $box->setQuantity(-1);
+                $box->setPrice(0); // Daily boxes are free
+            } else {
+                $box->setQuantity($request->quantity);
+                $box->setPrice($request->price);
+            }
+
+            $this->editBrawlersInBox($box, $request->brawlers_in_box);
+
+            if ($isDailyBox) {
+                $boxDaily = $this->getDailyBox($box);
+                $boxDaily->setRepeatEveryHours($request->repeat_every_hours);
+                $this->getEntityManager()->persist($boxDaily);
+            }
+
+            $this->getEntityManager()->flush();
+            $this->getEntityManager()->commit();
+        } catch (\Exception $e) {
+            $this->getEntityManager()->rollback();
+            throw $e;
+        }
+    }
+
+    private function getDailyBox(Box $box): BoxDaily|null
+    {
+        return $this->getEntityManager()->getRepository(BoxDaily::class)->findOneBy(['box' => $box]);
+    }
+
+    /**
+     * Edits the brawlers in a box
+     *
+     * @param Box $box
+     * @param array $brawlers
+     * @return void
+     */
+    public function editBrawlersInBox(Box $box, array $brawlers): void
+    {
+        $this->getEntityManager()->beginTransaction();
+
+        try {
+            $this->removeBrawlersFromBox($box);
+            $this->addBrawlersToBox($box, $brawlers);
+
+            $this->getEntityManager()->flush();
+            $this->getEntityManager()->commit();
+
+        } catch (\Exception $e) {
+            $this->getEntityManager()->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Removes all the brawlers from a box
+     *
+     * @param Box $box
+     * @return void
+     */
+    private function removeBrawlersFromBox(Box $box): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'DELETE FROM box_brawler bb
+                WHERE bb.box_id = :boxId';
+        $conn->executeQuery($sql, ['boxId' => $box->getId()]);
     }
 }
