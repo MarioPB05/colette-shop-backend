@@ -73,7 +73,8 @@ class BoxRepository extends ServiceEntityRepository
                 LEFT JOIN user_favorite_brawlers ufb ON bb.brawler_id = ufb.brawler_id AND ufb.user_id = :userId
                 LEFT JOIN inventory i ON b.id = i.box_id AND i.user_id = :userId 
                     AND i.collect_date > NOW() - INTERVAL '1 hour' * bd.repeat_every_hours
-                WHERE b.deleted = FALSE
+                LEFT JOIN public.order o ON i.order_id = o.id
+                WHERE b.deleted = FALSE and o.cancelled = FALSE
                 GROUP BY b.id, bd.repeat_every_hours;";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
@@ -108,10 +109,11 @@ class BoxRepository extends ServiceEntityRepository
     public function getBoxDetails(int $boxId): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(i.id) > 0) AS claimed 
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(o.id) > 0) AS claimed 
                 FROM box b
                 LEFT JOIN box_daily bd on b.id = bd.box_id
                 LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours
+                LEFT JOIN public.order o on i.order_id = o.id and o.cancelled = FALSE
                 WHERE b.deleted = FALSE and b.id = :boxId
                 GROUP BY b.id, bd.box_id';
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
