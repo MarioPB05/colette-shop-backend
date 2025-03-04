@@ -6,6 +6,7 @@ use App\DTO\box\BoxShopResponse;
 use App\Entity\Box;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -108,6 +109,18 @@ class BoxRepository extends ServiceEntityRepository
                 WHERE b.deleted = FALSE and b.id = :boxId
                 GROUP BY b.id, bd.box_id';
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
+    }
+
+    public function getAllBoxDetails(array $boxesIds): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(i.id) > 0) AS claimed, b.deleted
+                FROM box b
+                LEFT JOIN box_daily bd on b.id = bd.box_id
+                LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours
+                WHERE b.deleted = FALSE and b.id IN (:boxesIds)
+                GROUP BY b.id, bd.box_id';
+        return $conn->executeQuery($sql, ['boxesIds' => $boxesIds], ['boxesIds' => ArrayParameterType::INTEGER])->fetchAllAssociative();
     }
 
 }
