@@ -14,13 +14,14 @@ class CreateOrderRequest
     #[Assert\All([
         new Assert\Type(type: CartItemRequest::class),
     ])]
+    #[Assert\NotNull]
     #[Assert\NotBlank]
     public array $items;
 
-    #[Assert\NotBlank]
+    #[Assert\NotNull]
     public bool $useGems;
 
-    #[Assert\NotBlank]
+    #[Assert\NotNull]
     public bool $isGift;
 
     public string | null $giftUsername;
