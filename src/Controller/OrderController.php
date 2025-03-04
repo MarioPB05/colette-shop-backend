@@ -7,6 +7,7 @@ use App\DTO\order\InventoryOrderDetailsResponse;
 use App\DTO\order\OrderDetailsResponse;
 use App\DTO\order\OrderParticipantResponse;
 use App\DTO\order\TableOrderResponse;
+use App\Entity\Box;
 use App\Entity\GemTransaction;
 use App\Entity\Inventory;
 use App\Entity\Order;
@@ -15,6 +16,7 @@ use App\Entity\User;
 use App\Enum\BoxType;
 use App\Enum\OrderState;
 use App\Repository\BoxRepository;
+use App\Repository\GemTransactionRepository;
 use App\Repository\InventoryRepository;
 use App\Repository\OrderRepository;
 use App\Repository\UserRepository;
@@ -31,10 +33,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class OrderController extends AbstractController
 {
     private OrderRepository $orderRepository;
+    private GemTransactionRepository $gemTransactionRepository;
+    private InventoryRepository $inventoryRepository;
 
-    public function __construct(OrderRepository $orderRepository)
+    public function __construct(OrderRepository $orderRepository, GemTransactionRepository $gemTransactionRepository, InventoryRepository $inventoryRepository)
     {
         $this->orderRepository = $orderRepository;
+        $this->inventoryRepository = $inventoryRepository;
+        $this->gemTransactionRepository = $gemTransactionRepository;
     }
 
     #[Route('/{brawlTag}', name: 'order_list', methods: ['GET'])]
@@ -183,6 +189,10 @@ class OrderController extends AbstractController
                     continue;
                 }
 
+                if ($item->quantity > 1000) {
+                    throw new \Exception('Max quantity per box is 1000');
+                }
+
                 for ($i = 0; $i < $item->quantity; $i++) {
                     $inventory = new Inventory();
                     $inventory->setPrice($box['price']);
@@ -206,12 +216,8 @@ class OrderController extends AbstractController
                     throw new \Exception('User has no gems');
                 }
 
-                $transaction = new GemTransaction();
-                $transaction->setGems(-$user->getGems()); // Gems in negative because the user is spending them
-                $transaction->setDate(new \DateTime());
-                $transaction->setUser($user);
-
-                $entityManager->persist($transaction);
+                $transactionId = $this->gemTransactionRepository->addGemTransaction($user->getId(), -$user->getGems());
+                $transaction = $entityManager->getRepository(GemTransaction::class)->find($transactionId);
 
                 $orderDiscount = new OrderDiscount();
                 $orderDiscount->setOrder($order);
@@ -250,17 +256,62 @@ class OrderController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse
     {
-        if (!$order->isCancelled() || $order->getState() !== OrderState::PENDING) {
-            return new JsonResponse(['status' => 'error', 'message' => 'Order cannot be paid'], Response::HTTP_BAD_REQUEST);
+        $entityManager->beginTransaction();
+
+        try {
+            if (!$order->isCancelled() || $order->getState() !== OrderState::PENDING) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Order cannot be paid'], Response::HTTP_BAD_REQUEST);
+            }
+
+            /** @var User $user */
+            $user = $this->getUser();
+            $orderDetails = $this->orderRepository->getOrderDetails($order->getId(), false);
+
+            $cartTotal = round($orderDetails['total'], 2);
+            $subtotal = round(($cartTotal / 1.21) - $orderDetails['discount'], 2);
+            $iva = round($subtotal * 0.21, 2);
+            $total = $subtotal + $iva;
+
+            // Calculate the gems that the user will receive (10% of the total price)
+            $gems = round($total * 10);
+            $this->gemTransactionRepository->addGemTransaction($user->getId(), $gems);
+
+            $order->setCancelled(false);
+            $order->setState(OrderState::PAID);
+
+            $orderItems = $this->inventoryRepository->getInventoryForOrderDetails($order->getId());
+
+            // Group the items by box id
+            $groupedItems = [];
+
+            foreach ($orderItems as $item) {
+                if (!isset($groupedItems[$item['id']])) {
+                    $groupedItems[$item['id']] = 0;
+                }
+
+                $groupedItems[$item['id']]++;
+            }
+
+            // Update the boxes left on table box
+            foreach ($groupedItems as $boxId => $quantity) {
+                $box = $entityManager->getRepository(Box::class)->find($boxId);
+
+                // Only update if the box has a limit
+                if ($box->getQuantity() !== -1) {
+                    $box->setQuantity($box->getQuantity() - $quantity);
+                    $entityManager->persist($box);
+                }
+            }
+
+            $entityManager->persist($order);
+            $entityManager->flush();
+            $entityManager->commit();
+
+            return new JsonResponse(['status' => 'success', 'message' => $gems], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            $entityManager->rollback();
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $order->setCancelled(false);
-        $order->setState(OrderState::PAID);
-
-        $entityManager->persist($order);
-        $entityManager->flush();
-
-        return new JsonResponse(['status' => 'success', 'message' => 'Order paid'], Response::HTTP_OK);
     }
 
 }
