@@ -186,4 +186,72 @@ class BoxRepository extends ServiceEntityRepository
             throw $e;
         }
     }
+
+    /**
+     * Checks if a box is a daily box
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function isDailyBox(int $id): bool
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT bd.box_id
+                FROM box_daily bd
+                WHERE bd.box_id = :id';
+        return $conn->executeQuery($sql, ['id' => $id])->fetchOne() !== false;
+    }
+
+    /**
+     * Returns the details of a box
+     *
+     * @param int $id
+     * @return array
+¡     */
+    public function getCreateBoxRequest(int $id): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity, b.brawler_quantity
+                FROM box b
+                WHERE b.deleted = FALSE and b.id = :id
+                GROUP BY b.id';
+
+        return $conn->executeQuery($sql, ['id' => $id])->fetchAssociative();
+    }
+
+    /**
+     * It returns the details of a daily box
+     *
+     * @param int $id
+     * @return array
+     */
+    public function getCreateDailyBoxRequest(int $id): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT b.id, b.name, b.type, bd.repeat_every_hours, b.brawler_quantity
+                FROM box b
+                JOIN box_daily bd on b.id = bd.box_id
+                WHERE b.deleted = FALSE and b.id = :id
+                GROUP BY b.id, bd.repeat_every_hours';
+
+        return $conn->executeQuery($sql, ['id' => $id])->fetchAssociative();
+    }
+
+
+    /**
+     * It returns the brawlers that are in a box
+     *
+     * @param int $boxId
+     * @return array
+     */
+    public function getBrawlersInBox(int $boxId) : array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT bb.brawler_id as id, bb.probability
+                FROM box_brawler bb
+                WHERE bb.box_id = :boxId';
+        return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAllAssociative();
+    }
 }
