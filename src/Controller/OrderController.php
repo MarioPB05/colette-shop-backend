@@ -236,7 +236,7 @@ class OrderController extends AbstractController
 
             $message = $order->getId();
 
-            if ($total === 0) {
+            if ($total == 0) {
                 $message .= '//skipPayment';
             }
 
