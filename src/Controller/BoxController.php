@@ -149,4 +149,37 @@ final class BoxController extends AbstractController
 
         return $this->json(['status' => 'success', 'message' => 'Box created'], Response::HTTP_CREATED);
     }
+
+    #[Route('/get/{id}', name: 'box_get_create_request', methods: ['GET'])]
+    public function getCreateBoxRequest(int $id, BoxRepository $boxRepository, TranslatorInterface $translator): JsonResponse
+    {
+        $boxDetails = [];
+        $is_daily = $boxRepository->isDailyBox($id);
+        $brawlers = $boxRepository->getBrawlersInBox($id);
+
+        if ($is_daily) {
+            $boxDetails = $boxRepository->getCreateDailyBoxRequest($id);
+        } else {
+            $boxDetails = $boxRepository->getCreateBoxRequest($id);
+        }
+
+        if ($is_daily) {
+            return $this->json(new CreateDailyBoxRequest(
+                $boxDetails['name'],
+                $boxDetails['type'],
+                $boxDetails['repeat_every_hours'],
+                $boxDetails['brawler_quantity'],
+                $brawlers
+            ));
+        }
+
+        return $this->json(new CreateBoxRequest(
+            $boxDetails['name'],
+            $boxDetails['price'],
+            $boxDetails['type'],
+            $boxDetails['quantity'],
+            $boxDetails['brawler_quantity'],
+            $brawlers
+        ));
+    }
 }
