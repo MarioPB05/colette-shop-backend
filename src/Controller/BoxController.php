@@ -66,6 +66,7 @@ final class BoxController extends AbstractController
             $result['quantity'],
             $result['type'],
             $result['pinned'],
+            $result['is_daily'],
             $translator
         ), $boxRepository->getAllBoxes()));
     }
