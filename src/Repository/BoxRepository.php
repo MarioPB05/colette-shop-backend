@@ -3,8 +3,14 @@
 namespace App\Repository;
 
 use App\DTO\box\BoxShopResponse;
+use App\DTO\box\CreateBoxRequest;
+use App\DTO\box\CreateDailyBoxRequest;
 use App\Entity\Box;
+use App\Entity\BoxBrawler;
+use App\Entity\BoxDaily;
+use App\Entity\Brawler;
 use App\Entity\User;
+use App\Enum\BoxType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
@@ -105,4 +111,79 @@ class BoxRepository extends ServiceEntityRepository
         return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
     }
 
+    /**
+     * It creates a new box
+     *
+     * @param CreateBoxRequest $createBoxRequest
+     * @return void
+     */
+    public function createBox(CreateBoxRequest $createBoxRequest): void
+    {
+        $this->getEntityManager()->beginTransaction();
+
+        try {
+            $box = new Box();
+            $box->setName($createBoxRequest->name);
+            $box->setPrice($createBoxRequest->price);
+            $box->setType(BoxType::tryFrom($createBoxRequest->type));
+            $box->setQuantity($createBoxRequest->quantity);
+            $box->setBrawlerQuantity($createBoxRequest->brawler_quantity);
+            $this->getEntityManager()->persist($box);
+
+            foreach ($createBoxRequest->brawlers_in_box as $brawler) {
+                $boxBrawler = new BoxBrawler();
+                $boxBrawler->setBrawler($this->getEntityManager()->getReference(Brawler::class, $brawler['id']));
+                $boxBrawler->setProbability($brawler['probability']);
+                $boxBrawler->setBox($box);
+                $this->getEntityManager()->persist($boxBrawler);
+            }
+
+            $this->getEntityManager()->flush();
+            $this->getEntityManager()->commit();
+
+        }catch (\Exception $e) {
+            $this->getEntityManager()->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * It creates a new daily box
+     *
+     * @param CreateDailyBoxRequest $createDailyBoxRequest
+     * @return void
+     */
+    public function createDailyBox(CreateDailyBoxRequest $createDailyBoxRequest) : void
+    {
+        $this->getEntityManager()->beginTransaction();
+
+        try {
+            $box = new Box();
+            $box->setName($createDailyBoxRequest->name);
+            $box->setQuantity(-1);
+            $box->setBrawlerQuantity($createDailyBoxRequest->brawler_quantity);
+            $box->setPrice(0); // Daily boxes are free
+            $box->setType(BoxType::tryFrom($createDailyBoxRequest->type));
+            $this->getEntityManager()->persist($box);
+
+            $boxDaily = new BoxDaily();
+            $boxDaily->setBox($box);
+            $boxDaily->setRepeatEveryHours($createDailyBoxRequest->repeat_every_hours);
+            $this->getEntityManager()->persist($boxDaily);
+
+            foreach ($createDailyBoxRequest->brawlers_in_box as $brawler) {
+                $boxBrawler = new BoxBrawler();
+                $boxBrawler->setBrawler($this->getEntityManager()->getReference(Brawler::class, $brawler['id']));
+                $boxBrawler->setProbability($brawler['probability']);
+                $boxBrawler->setBox($box);
+                $this->getEntityManager()->persist($boxBrawler);
+            }
+
+            $this->getEntityManager()->flush();
+            $this->getEntityManager()->commit();
+        }catch (\Exception $e) {
+            $this->getEntityManager()->rollback();
+            throw $e;
+        }
+    }
 }
