@@ -22,11 +22,11 @@ class BrawlerRepository extends ServiceEntityRepository
     public function getAllBrawlers(): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT b.id, b.name, b.pin_image as pin_image, r.name AS rarity,
+        $sql = 'SELECT b.id, b.name, b.pin_image as pin_image, r.name AS rarity_name, r.id AS rarity_id, r.color AS rarity_color,
                     (
-                        SELECT COUNT(u.user_id)
+                        SELECT COUNT(distinct u.user_id) AS brawler_count
                         FROM user_brawler u
-                        WHERE u.brawler_id = b.id
+                        where u.brawler_id = b.id
                     ) AS num_people,
                     (
                         SELECT COUNT(u.user_id)

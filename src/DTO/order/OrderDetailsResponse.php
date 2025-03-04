@@ -9,7 +9,6 @@ class OrderDetailsResponse
 {
     public OrderParticipantResponse $from;
     public OrderParticipantResponse $to;
-    public float $subTotal;
     public float $total;
     public float $discount;
     public int $gems;
@@ -33,11 +32,6 @@ class OrderDetailsResponse
     public function setFrom(OrderParticipantResponse $from): void
     {
         $this->from = $from;
-    }
-
-    public function getTo(): OrderParticipantResponse
-    {
-        return $this->to;
     }
 
     public function setTo(OrderParticipantResponse $to): void
