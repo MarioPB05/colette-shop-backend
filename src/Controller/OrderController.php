@@ -80,7 +80,6 @@ class OrderController extends AbstractController
             $ordersResponse->setFrom($orderResponseFrom);
             $ordersResponse->setTo($orderResponseTo);
 
-            $ordersResponse->setSubTotal($order['sub_total']);
             $ordersResponse->setTotal($order['total']);
             $ordersResponse->setDiscount($order['discount']);
             $ordersResponse->setGems($order['gems']);

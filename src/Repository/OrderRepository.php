@@ -85,8 +85,7 @@ class OrderRepository extends ServiceEntityRepository
                         when i.user_id != o.user_id then c2.dni
                         end as to_dni,
                     coalesce(od.discount, 0) as discount,
-                    sum(i.price) as sub_total,
-                    sum(i.price) - coalesce(od.discount, 0) as total,
+                    sum(i.price) as total,
                     u.gems,
                     b.image as user_image
                 from \"order\" o
