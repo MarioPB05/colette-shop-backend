@@ -244,6 +244,7 @@ class InventoryRepository extends ServiceEntityRepository
                     b.id as box_id,
                     b.name as box_name,
                     b.brawler_quantity as total_brawlers,
+                    b.type as box_type,
                     coalesce(sum(case
                                      when ub.brawler_id not in (
                                          select distinct brawler_id
@@ -252,7 +253,14 @@ class InventoryRepository extends ServiceEntityRepository
                                      ) then 1
                                      else 0
                         end), 0) as new_brawlers_obtained,
-                    coalesce(sum(ub.quantity), 0) as total_trophies,
+                    coalesce(sum(case
+                                     when ub.brawler_id in (
+                                         select distinct brawler_id
+                                         from user_brawler
+                                         where user_id = i.user_id and inventory_id != i.id
+                                     ) then ub.quantity  -- Si ya lo tenía, todos cuentan como trofeos
+                                     else ub.quantity - 1  -- Si es nuevo, el primero no cuenta
+                        end), 0) as total_trophies,
                     case
                         when o.user_id != i.user_id then u_sender.username
                         else null
@@ -261,9 +269,9 @@ class InventoryRepository extends ServiceEntityRepository
                          join box b on i.box_id = b.id
                          left join user_brawler ub on i.id = ub.inventory_id
                          left join \"order\" o on i.order_id = o.id
-                         left join \"user\" u_sender on o.user_id = u_sender.id
-                where i.user_id = :userId
-                group by i.id, b.name, b.brawler_quantity, o.user_id, u_sender.username, b.id";
+                left join \"user\" u_sender on o.user_id = u_sender.id
+                where i.user_id = :userId and o.cancelled is true
+                        group by i.id, b.name, b.brawler_quantity, o.user_id, u_sender.username, b.id";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
 

@@ -9,6 +9,7 @@ class BoxInventoryDetailsResponse
     public string $collectDate;
     public ?string $openDate;
     public int $boxId;
+    public string $boxType;
     public string $boxName;
     public int $totalBrawlers;
     public int $newBrawlersObtained;
@@ -67,5 +68,10 @@ class BoxInventoryDetailsResponse
     public function setOpenDate(string $openDate): void
     {
         $this->openDate = $openDate;
+    }
+
+    public function setBoxType(string $boxType): void
+    {
+        $this->boxType = $boxType;
     }
 }
