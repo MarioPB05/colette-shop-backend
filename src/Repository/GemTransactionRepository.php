@@ -15,4 +15,20 @@ class GemTransactionRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, GemTransaction::class);
     }
+
+    public function addGemTransaction(int $userId, int $amount): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $gemSQL = "INSERT INTO gem_transaction (gems, date, user_id)
+                VALUES (:amount, NOW(), :userId)";
+
+        $userSQL = "UPDATE public.user
+                    SET gems = gems + :amount
+                    WHERE id = :userId";
+
+        $conn->executeQuery($gemSQL, ['userId' => $userId, 'amount' => $amount]);
+        $conn->executeQuery($userSQL, ['userId' => $userId, 'amount' => $amount]);
+
+        return $conn->lastInsertId();
+    }
 }

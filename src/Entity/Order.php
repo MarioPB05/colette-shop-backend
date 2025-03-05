@@ -24,8 +24,8 @@ class Order
     #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private ?\DateTimeInterface $purchase_date = null;
 
-    #[ORM\Column(enumType: OrderState::class, options: ['default' => 0])]
-    private int $state = 0;
+    #[ORM\Column(type: 'integer', enumType: OrderState::class, options: ['default' => 0])]
+    private OrderState $state;
 
     #[ORM\Column(options: ['default' => true])]
     private bool $cancelled = true;
@@ -79,12 +79,12 @@ class Order
 
     public function getState(): OrderState
     {
-        return OrderState::from($this->state);
+        return $this->state;
     }
 
     public function setState(OrderState $state): static
     {
-        $this->state = $state->value;
+        $this->state = $state;
 
         return $this;
     }
