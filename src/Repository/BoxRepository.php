@@ -65,16 +65,16 @@ class BoxRepository extends ServiceEntityRepository
                     b.type,
                     COUNT(ufb.brawler_id) AS favorite_brawlers_in_box,
                     bd.repeat_every_hours,
-                    (COUNT(i.id) > 0) AS claimed,
-                    MAX(i.collect_date) AS last_claimed
+                    (COUNT(o.id) > 0) AS claimed,
+                    CASE WHEN COUNT(o.id) = 0 THEN NULL ELSE MAX(i.collect_date) END AS last_claimed
                 FROM box b
                 JOIN box_daily bd ON b.id = bd.box_id
                 LEFT JOIN box_brawler bb ON b.id = bb.box_id
                 LEFT JOIN user_favorite_brawlers ufb ON bb.brawler_id = ufb.brawler_id AND ufb.user_id = :userId
                 LEFT JOIN inventory i ON b.id = i.box_id AND i.user_id = :userId 
                     AND i.collect_date > NOW() - INTERVAL '1 hour' * bd.repeat_every_hours
-                LEFT JOIN public.order o ON i.order_id = o.id
-                WHERE b.deleted = FALSE and o.cancelled = FALSE
+                LEFT JOIN public.order o ON i.order_id = o.id AND o.cancelled = FALSE
+                WHERE b.deleted = FALSE
                 GROUP BY b.id, bd.repeat_every_hours;";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
