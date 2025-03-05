@@ -115,9 +115,8 @@ class OrderRepository extends ServiceEntityRepository
                        LEFT JOIN \"user\" to_user ON i.user_id = to_user.id
                        LEFT JOIN client to_client ON to_user.client_id = to_client.id
 
-              WHERE o.cancelled IS FALSE
-                AND o.id = :orderId
-
+              WHERE o.id = :orderId $where
+              
               GROUP BY
                   o.invoice_number, o.purchase_date, o.state,
                   from_user.id, from_user.username, from_client.name, from_client.surname, from_client.dni, from_brawler.image,
