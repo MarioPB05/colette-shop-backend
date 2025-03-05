@@ -204,7 +204,7 @@ class BoxRepository extends ServiceEntityRepository
      *
      * @param int $id
      * @return array
-¡     */
+     * ¡     */
     public function getCreateBoxRequest(int $id): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -243,7 +243,7 @@ class BoxRepository extends ServiceEntityRepository
      * @param int $boxId
      * @return array
      */
-    public function getBrawlersInBox(int $boxId) : array
+    public function getBrawlersInBox(int $boxId): array
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = 'SELECT bb.brawler_id as id, bb.probability
@@ -348,4 +348,29 @@ class BoxRepository extends ServiceEntityRepository
         return $conn->executeQuery($sql, ['boxesIds' => $boxesIds], ['boxesIds' => ArrayParameterType::INTEGER])->fetchAllAssociative();
     }
 
+    /**
+     * Pin a box
+     * @param int $boxId
+     * @return void
+     * @throws Exception
+     */
+    public function pinBox(int $boxId): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'UPDATE box SET pinned = TRUE WHERE id = :boxId';
+        $conn->executeQuery($sql, ['boxId' => $boxId]);
+    }
+
+    /**
+     * Unpin a box
+     * @param int $boxId
+     * @return void
+     * @throws Exception
+     */
+    public function unpinBox(int $boxId): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'UPDATE box SET pinned = FALSE WHERE id = :boxId';
+        $conn->executeQuery($sql, ['boxId' => $boxId]);
+    }
 }

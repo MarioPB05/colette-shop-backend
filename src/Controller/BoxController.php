@@ -277,4 +277,20 @@ final class BoxController extends AbstractController
 
         return $this->json(['status' => 'success', 'message' => 'Box updated'], Response::HTTP_CREATED);
     }
+
+    #[Route('/{id}/pin', name: 'box_claim', methods: ['POST'])]
+    public function pin(int $id, BoxRepository $boxRepository): JsonResponse
+    {
+        $boxRepository->pinBox($id);
+
+        return $this->json(['status' => 'success', 'message' => 'Box pinned'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/{id}/unpin', name: 'box_unpin', methods: ['POST'])]
+    public function unpin(int $id, BoxRepository $boxRepository): JsonResponse
+    {
+        $boxRepository->unpinBox($id);
+
+        return $this->json(['status' => 'success', 'message' => 'Box unpinned'], Response::HTTP_CREATED);
+    }
 }

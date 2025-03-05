@@ -154,7 +154,7 @@ class OrderRepository extends ServiceEntityRepository
                      FROM \"order\" o2
                      JOIN inventory i2 ON o2.id = i2.order_id
                      JOIN \"user\" u2 ON i2.user_id = u2.id
-                     WHERE o2.user_id = u.id
+                     WHERE o2.id = o.id
                        AND o2.user_id <> i2.user_id
                      LIMIT 1) AS gift_username
                 FROM \"order\" o

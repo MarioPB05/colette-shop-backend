@@ -271,7 +271,7 @@ class InventoryRepository extends ServiceEntityRepository
                          left join user_brawler ub on i.id = ub.inventory_id
                          left join \"order\" o on i.order_id = o.id
                 left join \"user\" u_sender on o.user_id = u_sender.id
-                where i.user_id = :userId and o.cancelled is true
+                where i.user_id = :userId and o.cancelled is false
                         group by i.id, b.name, b.brawler_quantity, o.user_id, u_sender.username, b.id";
 
         $result = $conn->executeQuery($sql, ['userId' => $user->getId()]);
