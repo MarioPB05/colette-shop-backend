@@ -63,44 +63,68 @@ class OrderRepository extends ServiceEntityRepository
         $where = $excludeCancelled ? 'AND o.cancelled IS FALSE' : '';
 
         $conn = $this->getEntityManager()->getConnection();
-        $sql = "select
-                    o.invoice_number,
-                    o.purchase_date,
-                    o.state,
-                    u.id as from_id,
-                    u.username as from_username,
-                    c.name as from_name,
-                    c.surname as from_surname,
-                    c.dni as from_dni,
-                    case
-                        when i.user_id != o.user_id then u2.id
-                        end as to_id,
-                    case
-                        when i.user_id != o.user_id then u2.username
-                        end as to_username,
-                    case
-                        when i.user_id != o.user_id then c2.name
-                        end as to_name,
-                    case
-                        when i.user_id != o.user_id then c2.surname
-                        end as to_surname,
-                    case
-                        when i.user_id != o.user_id then c2.dni
-                        end as to_dni,
-                    coalesce(od.discount, 0) as discount,
-                    sum(i.price) as total,
-                    u.gems,
-                    b.image as user_image
-                from \"order\" o
-                         left join order_discount od on o.id = od.order_id
-                         left join \"user\" u on o.user_id = u.id
-                         left join client c on u.client_id = c.id
-                         left join inventory i on o.id = i.order_id
-                         left join \"user\" u2 on i.user_id = u2.id
-                         left join client c2 on u2.client_id = c2.id
-                         left join brawler b on u.brawler_avatar = b.id
-                where o.id = :orderId $where
-                group by o.id, o.invoice_number, i.user_id, o.purchase_date, o.state, u.id, u.username, c.name, c.surname, c.dni, u2.id, u2.username, c2.name, c2.surname, c2.dni, od.discount, u.gems, b.image";
+        $sql = "SELECT
+                  o.invoice_number,
+                  o.purchase_date,
+                  o.state,
+
+                  -- Datos del usuario que hizo el pedido (from_user)
+                  from_user.id AS from_id,
+                  from_user.username AS from_username,
+                  from_client.name AS from_name,
+                  from_client.surname AS from_surname,
+                  from_client.dni AS from_dni,
+                  from_brawler.image AS from_user_image,
+
+                  -- Datos del usuario que recibe el pedido (to_user)
+                  to_user.id AS to_id,
+                  to_user.username AS to_username,
+                  to_client.name AS to_name,
+                  to_client.surname AS to_surname,
+                  to_client.dni AS to_dni,
+
+                  -- Datos de las cajas compradas
+                  b.id AS box_id,
+                  b.name AS box_name,
+                  b.type AS box_type,
+                  COUNT(i.id) AS quantity,  -- Cantidad de cajas compradas
+                  i.price AS unit_price,
+                  COUNT(i.id) * i.price AS total,  -- Precio total por tipo de caja
+
+                  -- Descuento aplicado
+                  COALESCE(od.discount, 0) AS discount,
+
+                  -- Transacciones de gemas
+                  COALESCE(ABS(gt.gems), 0) AS gems
+
+              FROM \"order\" o
+                       -- Descuentos y transacciones de gemas
+                       LEFT JOIN order_discount od ON o.id = od.order_id
+                       LEFT JOIN gem_transaction gt ON od.transaction_id = gt.id
+
+                  -- Usuario que hizo el pedido (from_user)
+                       LEFT JOIN \"user\" from_user ON o.user_id = from_user.id
+                       LEFT JOIN client from_client ON from_user.client_id = from_client.id
+                       LEFT JOIN brawler from_brawler ON from_user.brawler_avatar = from_brawler.id
+
+                  -- Inventario (cajas compradas)
+                       LEFT JOIN inventory i ON o.id = i.order_id
+                       LEFT JOIN box b ON i.box_id = b.id
+
+                  -- Usuario que recibe el pedido (to_user) -> Se asume que el usuario que recibe es quien aparece en inventory
+                       LEFT JOIN \"user\" to_user ON i.user_id = to_user.id
+                       LEFT JOIN client to_client ON to_user.client_id = to_client.id
+
+              WHERE o.cancelled IS FALSE
+                AND o.id = :orderId
+
+              GROUP BY
+                  o.invoice_number, o.purchase_date, o.state,
+                  from_user.id, from_user.username, from_client.name, from_client.surname, from_client.dni, from_brawler.image,
+                  to_user.id, to_user.username, to_client.name, to_client.surname, to_client.dni,
+                  b.id, b.name, b.type, i.price, od.discount, gt.gems
+
+              ORDER BY b.id";
 
         $result = $conn->executeQuery($sql, ['orderId' => $orderId]);
 
