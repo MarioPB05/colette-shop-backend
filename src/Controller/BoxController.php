@@ -139,7 +139,10 @@ final class BoxController extends AbstractController
     #[Route('/{id}', name: 'box_get_details', methods: ['GET'])]
     public function getDetails(int $id, BoxRepository $boxRepository, TranslatorInterface $translator): JsonResponse
     {
-        $boxDetails = $boxRepository->getBoxDetails($id);
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $boxDetails = $boxRepository->getBoxDetails($id, $user->getId());
 
         return $this->json(new BoxDetailResponse(
             $boxDetails['id'],

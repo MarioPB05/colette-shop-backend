@@ -63,7 +63,7 @@ class BoxRepository extends ServiceEntityRepository
                     b.id,
                     b.name,
                     b.type,
-                    COUNT(ufb.brawler_id) AS favorite_brawlers_in_box,
+                    COUNT(distinct ufb.brawler_id) AS favorite_brawlers_in_box,
                     bd.repeat_every_hours,
                     (COUNT(o.id) > 0) AS claimed,
                     CASE WHEN COUNT(o.id) = 0 THEN NULL ELSE MAX(i.collect_date) END AS last_claimed
@@ -106,17 +106,17 @@ class BoxRepository extends ServiceEntityRepository
      * @param int $boxId
      * @return array
      */
-    public function getBoxDetails(int $boxId): array
+    public function getBoxDetails(int $boxId, int $userId): array
     {
         $conn = $this->getEntityManager()->getConnection();
         $sql = 'SELECT b.id, b.name, b.price, b.type, b.quantity as boxes_left, b.brawler_quantity, NOT bd.box_id IS NULL as is_daily, (COUNT(o.id) > 0) AS claimed 
                 FROM box b
                 LEFT JOIN box_daily bd on b.id = bd.box_id
-                LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours
+                LEFT JOIN inventory i on b.id = i.box_id and i.collect_date > NOW() - INTERVAL \'1 hour\' * bd.repeat_every_hours and i.user_id = :userId
                 LEFT JOIN public.order o on i.order_id = o.id and o.cancelled = FALSE
                 WHERE b.deleted = FALSE and b.id = :boxId
                 GROUP BY b.id, bd.box_id';
-        return $conn->executeQuery($sql, ['boxId' => $boxId])->fetchAssociative();
+        return $conn->executeQuery($sql, ['boxId' => $boxId, 'userId' => $userId])->fetchAssociative();
     }
 
     /**
