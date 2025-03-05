@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\DTO\box\BoxInventoryDetailsResponse;
 use App\DTO\box\InventoryBoxResponse;
 use App\Entity\User;
+use App\Enum\BoxType;
 use App\Repository\InventoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -61,7 +62,7 @@ final class InventoryController extends AbstractController
     }
 
     #[Route("/user/inventory", name: 'user_inventory', methods: ['GET'])]
-    public function getUserInventory(InventoryRepository $inventoryRepository): JsonResponse
+    public function getUserInventory(InventoryRepository $inventoryRepository, TranslatorInterface $translator): JsonResponse
     {
         /* @var User $user */
         $user = $this->getUser();
@@ -81,6 +82,7 @@ final class InventoryController extends AbstractController
             $inventoryRequest->setNewBrawlersObtained($inventory['new_brawlers_obtained']);
             $inventoryRequest->setTotalTrophies($inventory['total_trophies']);
             $inventoryRequest->setGiftFrom($inventory['gift_from']);
+            $inventoryRequest->setBoxType($translator->trans('BoxType.' . BoxType::tryFrom($inventory['box_type'])->name, domain: 'enums'));
             $inventoryRequests[] = $inventoryRequest;
         }
 
